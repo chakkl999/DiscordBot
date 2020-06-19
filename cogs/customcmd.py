@@ -70,7 +70,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
         if not user:
             await ctx.send("Onii-chan, that custom command doesn't exist.")
             return
-        if user[0] == str(ctx.author.id) or ctx.author.guild_permissions.administrator:
+        if user[0] == str(ctx.author.id) or ctx.author.guild_permissions.administrator or user[0] == str(self.bot.owner_id):
             self.cursor.execute("UPDATE custom_cmd SET response = ? WHERE server = ? AND cmd = ?", (arg[1], str(ctx.guild.id), arg[0]))
             self.conn.commit()
             await ctx.message.add_reaction("✅")
@@ -86,12 +86,43 @@ class Customcmd(commands.Cog, name="Customcmd"):
         if not user:
             await ctx.send("Onii-chan, that custom command doesn't exist.")
             return
-        if user[0] == str(ctx.author.id) or ctx.author.guild_permissions.administrator:
+        if user[0] == str(ctx.author.id) or ctx.author.guild_permissions.administrator or user[0] == str(self.bot.owner_id):
             self.cursor.execute("DELETE FROM custom_cmd WHERE server = ? AND cmd = ?", (str(ctx.guild.id), arg))
             self.conn.commit()
             await ctx.message.add_reaction("✅")
         else:
             await ctx.send("Onii-chan, you don't have the permission to delete this command.")
+
+    @ccmd.command(name="transfer", description="Onii-chan can transfer the ownership of a custom command to someone else.", usage="ccmd transfer [command name]")
+    async def transferccmd(self, ctx, *, arg: commands.clean_content):
+        """Transfer ownership of a custom command.
+        It will ask you who to give it to and you just need to @ the user when that happens.
+        Only the owner/admin can transfer ownership."""
+        arg = arg.strip()
+        user = self.cursor.execute("SELECT owner FROM custom_cmd WHERE server = ? AND cmd = ?",(str(ctx.guild.id), arg)).fetchone()
+        if not user:
+            await ctx.send("Onii-chan, that custom command doesn't exist.")
+            return
+        if user[0] == str(ctx.author.id) or ctx.author.guild_permissions.administrator or user[0] == str(self.bot.owner_id):
+            def check(message):
+                return message.author == ctx.message.author
+            try:
+                await ctx.send("Onii-chan, who do you want to give the command to?")
+                message = await self.bot.wait_for('message', timeout=15.0, check=check)
+                try:
+                    user = await commands.MemberConverter().convert(ctx, message.content)
+                    if user.id == ctx.author.id:
+                        await ctx.send("Onii-chan, you already own this command.")
+                        return
+                    self.cursor.execute("UPDATE custom_cmd SET owner = ? WHERE server = ? AND cmd = ?", (str(user.id), str(ctx.guild.id), arg))
+                    self.conn.commit()
+                    await message.add_reaction("✅")
+                except commands.BadArgument:
+                    await ctx.send("Onii-chan, I can't find the user（>﹏<)")
+            except asyncio.TimeoutError:
+                await ctx.send("Timed out.")
+        else:
+            await ctx.send("Onii-chan, you don't have the permission to transfer ownership of this command.")
 
     @ccmd.command(name="list", description="Onii-chan can get the list of custom command in the server.", usage="ccmd list")
     async def ccmdlist(self, ctx):

@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import os
+import asyncio
 
 class Development(commands.Cog, name="Development", command_attrs = dict(hidden=True)):
     def __init__(self, bot):
@@ -43,7 +44,19 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
     @commands.is_owner()
     async def testfunc(self, ctx, *, arg):
         # embed = discord.Embed(color=int("%06x" % random.randint(0, 0xffffff), 16))
-        await ctx.send(ctx.message.content)
+        def check(message):
+            return message.author == ctx.message.author
+
+        try:
+            message = await self.bot.wait_for('message', timeout=15.0, check=check)
+            print(message.content)
+            try:
+                user = await commands.MemberConverter().convert(ctx, message.content)
+                print(user.id)
+            except Exception as e:
+                print(e.__class__.__name__)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out.")
 
 def setup(bot):
     bot.add_cog(Development(bot))
