@@ -110,11 +110,11 @@ class Customcmd(commands.Cog, name="Customcmd"):
                 await ctx.send("Onii-chan, who do you want to give the command to?")
                 message = await self.bot.wait_for('message', timeout=15.0, check=check)
                 try:
-                    user = await commands.MemberConverter().convert(ctx, message.content)
-                    if user.id == ctx.author.id:
-                        await ctx.send("Onii-chan, you already own this command.")
+                    owner = await commands.MemberConverter().convert(ctx, message.content)
+                    if owner.id == int(user[0]):
+                        await ctx.send("Onii-chan, that person already own this command.")
                         return
-                    self.cursor.execute("UPDATE custom_cmd SET owner = ? WHERE server = ? AND cmd = ?", (str(user.id), str(ctx.guild.id), arg))
+                    self.cursor.execute("UPDATE custom_cmd SET owner = ? WHERE server = ? AND cmd = ?", (str(owner.id), str(ctx.guild.id), arg))
                     self.conn.commit()
                     await message.add_reaction("✅")
                 except commands.BadArgument:

@@ -2,10 +2,7 @@ import discord
 from discord.ext import commands
 import os
 import sqlite3
-
-con = sqlite3.connect("./data/data.db")
-cur = con.cursor()
-default_prefix = "!loli "
+import pathlib
 
 async def get_prefix(bot, message):
     current_prefix = cur.execute("SELECT prefix FROM prefixes WHERE server = ?", (message.guild.id,)).fetchone()
@@ -15,8 +12,17 @@ async def get_prefix(bot, message):
         current_prefix = default_prefix
     return commands.when_mentioned_or(current_prefix)(bot, message)
 
-with open("./data/token.txt", 'r') as f:
-    TOKEN = f.readline()
+pathlib.Path("./data/data.db").touch(exist_ok=True)
+con = sqlite3.connect("./data/data.db")
+cur = con.cursor()
+default_prefix = "!loli "
+
+try:
+    with pathlib.Path("./data/token.txt").open() as f:
+        TOKEN = f.readline()
+except FileNotFoundError:
+    print("Make sure you have the 'token.txt' file with the bot's token.")
+    exit(1)
 bot = commands.Bot(command_prefix=get_prefix, description="Just a cute loli.")
 bot.remove_command('help')
 
