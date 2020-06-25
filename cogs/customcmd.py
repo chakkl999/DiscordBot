@@ -24,14 +24,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
             if self.cursor.execute("SELECT count(cmd) FROM custom_cmd WHERE server = ?", (str(ctx.guild.id),)).fetchone()[0] >= 40:
                 await ctx.send("Onii-chan, you have too many custom commands already >.<")
                 return
-            arg = arg.split("|")
-            if len(arg) < 2:
-                raise commands.BadArgument
-            if len(arg) > 2:
-                arg[1:] = ["|".join(arg[1:])]
-            if not arg[1]:
-                arg[1] = "No content."
-            arg = [x.strip() for x in arg]
+            arg = self.parseContent(arg)
             try:
                 self.cursor.execute("INSERT INTO custom_cmd VALUES (?,?,?,?,?)", (str(ctx.guild.id), str(ctx.author.id), str(ctx.author.id), arg[0], arg[1]))
                 self.conn.commit()
@@ -58,14 +51,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
     async def setccmd(self, ctx, *, arg: commands.clean_content):
         """The arguments work the same way ccmd, in that it uses | as the delimiter and anything after the first | will be counted as the content.
         Only the owner/admin can edit the command."""
-        arg = arg.split("|")
-        if len(arg) < 2:
-            raise commands.BadArgument
-        if len(arg) > 2:
-            arg[1:] = ["|".join(arg[1:])]
-        if not arg[1]:
-            arg[1] = "No content."
-        arg = [x.strip() for x in arg]
+        arg = self.parseContent(arg)
         user = self.cursor.execute("SELECT owner FROM custom_cmd WHERE server = ? AND cmd = ?", (str(ctx.guild.id), arg[0])).fetchone()
         if not user:
             await ctx.send("Onii-chan, that custom command doesn't exist.")
@@ -103,7 +89,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
         if not user:
             await ctx.send("Onii-chan, that custom command doesn't exist.")
             return
-        if user[0] == str(ctx.author.id) or ctx.author.guild_permissions.administrator or user[0] == str(self.bot.owner_id):
+        if int(user[0]) == ctx.author.id or ctx.author.guild_permissions.administrator or int(user[0]) == self.bot.owner_id:
             def check(message):
                 return message.author == ctx.message.author
             try:
@@ -172,7 +158,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
         if isinstance(error, commands.CommandNotFound):
             response = self.cursor.execute("SELECT response FROM custom_cmd WHERE server = ? AND cmd = ?", (ctx.guild.id, ctx.message.content[len(ctx.prefix):])).fetchone()
             if response:
-                if response[0].startswith("http"):
+                if response[0].startswith("http"): #if response exist and starts with http
                     async with aiohttp.ClientSession() as session:
                         try:
                             async with session.get(response[0]) as r:
@@ -193,10 +179,20 @@ class Customcmd(commands.Cog, name="Customcmd"):
                                     await ctx.send(file=discord.File(fp=b, filename=f"{ctx.message.content[len(ctx.prefix):]}.{ext}"))
                         except:
                             await ctx.send(response[0])
-                        return
-                await ctx.send(response[0])
+                else:
+                    await ctx.send(response[0])
             else:
                 await ctx.send("Command does not exist.")
+
+    def parseContent(self, arg: str) -> list:
+        arg = arg.split("|")
+        if len(arg) < 2:
+            raise commands.BadArgument
+        if len(arg) > 2:
+            arg[1:] = ["|".join(arg[1:])]
+        if not arg[1]:
+            arg[1] = "No content."
+        return [x.strip() for x in arg]
 
     def cog_unload(self):
         self.conn.commit();
