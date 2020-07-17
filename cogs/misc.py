@@ -84,7 +84,9 @@ class Misc(commands.Cog, name="Misc"):
         await ctx.send(random.choice(answer))
 
     @commands.command(name="nitro", description="Onii-chan can use any emotes from any server that I'm also in.", usage="nitro [content]")
-    async def nitro(self, ctx, *, arg: str):
+    async def nitro(self, ctx, *, arg: commands.clean_content):
+        """It will look for any emotes in the message and try to replace it for the actual emote.
+           Only works for emotes that are in servers that the bot is also in."""
         await ctx.message.delete()
         webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")
         if not webhook:
