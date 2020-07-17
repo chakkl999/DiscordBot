@@ -6,6 +6,7 @@ import asyncio
 import aiohttp
 from io import BytesIO
 import imghdr
+from inspect import Parameter
 
 class Customcmd(commands.Cog, name="Customcmd"):
     """Commands for creating your own custom command."""
@@ -158,7 +159,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
         if isinstance(error, commands.CommandNotFound):
             response = self.cursor.execute("SELECT response FROM custom_cmd WHERE server = ? AND cmd = ?", (ctx.guild.id, ctx.message.content[len(ctx.prefix):])).fetchone()
             if response:
-                if response[0].startswith("http"): #if response exist and starts with http
+                if response[0].startswith("http"): #if response starts with http, it will treat it as an image and do a request
                     async with aiohttp.ClientSession() as session:
                         try:
                             async with session.get(response[0]) as r:
@@ -169,19 +170,19 @@ class Customcmd(commands.Cog, name="Customcmd"):
                         except:
                             data = None
                     await session.close()
-                    if data:
+                    if data: #if request is successful
                         try:
                             with BytesIO(data) as b:
                                 ext = imghdr.what(None, h=b)
-                                if not ext:
+                                if not ext: #if it can't find the extension of the image, send it as a link
                                     await ctx.send(response[0])
-                                else:
-                                    await ctx.send(file=discord.File(fp=b, filename=f"{ctx.message.content[len(ctx.prefix):]}.{ext}"))
-                        except:
+                                else: #otherwise, send the image
+                                    await ctx.send(file=discord.File(fp=b, filename=f"{ctx.message.content[len(ctx.prefix):]}.{ext}")) #the image name will be the name of the custom cmd regardless of the original name
+                        except: #if it fails to send the image, send it as a regular link
                             await ctx.send(response[0])
-                else:
+                else: #if the response isn't a link, send it as a regular message
                     await ctx.send(response[0])
-            else:
+            else: #if the custom cmd doesn't exist in the database
                 await ctx.send("Command does not exist.")
 
     def parseContent(self, arg: str) -> list:
@@ -190,8 +191,8 @@ class Customcmd(commands.Cog, name="Customcmd"):
             raise commands.BadArgument
         if len(arg) > 2:
             arg[1:] = ["|".join(arg[1:])]
-        if not arg[1]:
-            arg[1] = "No content."
+        if not arg[0] or not arg[1]:
+            raise commands.MissingRequiredArgument(Parameter("Custom_command_name" if not arg[0] else "Custom_command_content", Parameter.POSITIONAL_OR_KEYWORD, annotation=str))
         return [x.strip() for x in arg]
 
     def cog_unload(self):

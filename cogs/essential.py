@@ -12,8 +12,8 @@ class Essential(commands.Cog, name="Essential"):
         self.bot = bot
         self.cogs = ["Degen", "Misc", "Essential", "Weeb", "Random", "Search", "Customcmd", "Game"]
         self.emotes = ["0⃣", "1⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", '🗑']
-        self.con = sqlite3.connect("./data/data.db")
-        self.cur = self.con.cursor()
+        self.conn = sqlite3.connect("./data/data.db")
+        self.cursor = self.conn.cursor()
 
     def mainMenu(self, ctx):
         prefix = ctx.prefix
@@ -35,8 +35,7 @@ class Essential(commands.Cog, name="Essential"):
         if ctx.invoked_subcommand is None:
             cog = await self.isCog(arg.capitalize())
             if cog:
-                embed = discord.Embed(title='Category', description=f"Help for {arg.capitalize()}",
-                                       color=discord.colour.Color.blue())
+                embed = discord.Embed(title='Category', description=f"Help for {arg.capitalize()}", color=discord.colour.Color.blue())
                 for command in cog.walk_commands():
                     if not command.hidden:
                         embed.add_field(name=command.qualified_name, value=f"`{command.description}`", inline=False)
@@ -46,10 +45,8 @@ class Essential(commands.Cog, name="Essential"):
             if arg:
                 command = await self.check_command(arg)
                 if command:
-                    embed = discord.Embed(title='Command', description=f"Help for {command.qualified_name}",
-                                            color=discord.Color.blurple())
-                    embed.add_field(name=f"Usage: {ctx.prefix}{command.usage}",
-                                    value=f"```\n{command.help}\n```", inline=False)
+                    embed = discord.Embed(title='Command', description=f"Help for {command.qualified_name}", color=discord.Color.blurple())
+                    embed.add_field(name=f"Usage: {ctx.prefix}{command.usage}", value=f"```\n{command.help}\n```", inline=False)
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send("I'm not sure there's a category with that name, onii-chan.")
@@ -89,8 +86,7 @@ class Essential(commands.Cog, name="Essential"):
         """This is the same as help but message through DM instead."""
         cog = await self.isCog(arg.capitalize())
         if cog:
-            embed = discord.Embed(title='Category', description=f"Help for {arg.capitalize()}",
-                                  color=discord.colour.Color.blue())
+            embed = discord.Embed(title='Category', description=f"Help for {arg.capitalize()}", color=discord.colour.Color.blue())
             for command in cog.walk_commands():
                 if not command.hidden:
                     embed.add_field(name=command.qualified_name, value=f"`{command.description}`", inline=False)
@@ -100,10 +96,8 @@ class Essential(commands.Cog, name="Essential"):
         if arg:
             command = await self.check_command(arg)
             if command:
-                embed = discord.Embed(title='Command', description=f"Help for {command.qualified_name}",
-                                      color=discord.Color.blurple())
-                embed.add_field(name=f"Usage: {ctx.prefix}{command.usage}",
-                                value=f"```\n{command.help}\n```", inline=False)
+                embed = discord.Embed(title='Command', description=f"Help for {command.qualified_name}", color=discord.Color.blurple())
+                embed.add_field(name=f"Usage: {ctx.prefix}{command.usage}", value=f"```\n{command.help}\n```", inline=False)
                 await ctx.message.author.send(embed=embed)
             else:
                 await ctx.send("I'm not sure there's a category with that name, onii-chan.")
@@ -129,8 +123,7 @@ class Essential(commands.Cog, name="Essential"):
                     await msg.delete()
                     break
                 else:
-                    embed = discord.Embed(title=self.cogs[index - 1], description=f"Help for {self.cogs[index - 1]}",
-                                          color=discord.colour.Color.blue())
+                    embed = discord.Embed(title=self.cogs[index - 1], description=f"Help for {self.cogs[index - 1]}", color=discord.colour.Color.blue())
                     for command in self.bot.get_cog(self.cogs[index - 1]).walk_commands():
                         if not command.hidden:
                             embed.add_field(name=command.qualified_name, value=f"`{command.description}`", inline=False)
@@ -140,20 +133,20 @@ class Essential(commands.Cog, name="Essential"):
     @commands.check(is_server_owner)
     async def set_prefix(self, ctx, *, arg: commands.clean_content):
         """Sets the custom prefix for the server, cannot be empty. Only the server owner to set the prefix."""
-        if int(self.cur.execute("SELECT EXISTS(SELECT 1 FROM prefixes WHERE server = ?)", (str(ctx.guild.id),)).fetchone()[0]):
-            self.cur.execute("UPDATE prefixes SET prefix = ? WHERE server = ?", (arg, str(ctx.guild.id)))
-            self.con.commit()
+        if int(self.cursor.execute("SELECT EXISTS(SELECT 1 FROM prefixes WHERE server = ?)", (str(ctx.guild.id),)).fetchone()[0]):
+            self.cursor.execute("UPDATE prefixes SET prefix = ? WHERE server = ?", (arg, str(ctx.guild.id)))
+            self.conn.commit()
         else:
-            self.cur.execute("INSERT INTO prefixes VALUES (?,?)", (str(ctx.guild.id), arg))
-            self.con.commit()
+            self.cursor.execute("INSERT INTO prefixes VALUES (?,?)", (str(ctx.guild.id), arg))
+            self.conn.commit()
         await ctx.message.add_reaction("✅")
 
     @commands.command(name="removeprefix", description="Onii-chan can remove the custom prefix.", usage="remove_prefix")
     @commands.check(is_server_owner)
     async def remove_prefix(self, ctx):
         """Remove the custom prefix. Reverting back to the default prefix which is !loli . Only the server owner can remove the prefix."""
-        self.cur.execute("DELETE FROM prefixes WHERE server = ?", (ctx.guild.id,))
-        self.con.commit()
+        self.cursor.execute("DELETE FROM prefixes WHERE server = ?", (ctx.guild.id,))
+        self.conn.commit()
         await ctx.message.add_reaction("✅")
 
     @commands.command(name="getprefix", description="Onii-chan can get the current prefix.", usage="get_prefix")

@@ -1,15 +1,19 @@
 import discord
 from discord.ext import commands
+from discord import Webhook, AsyncWebhookAdapter
 import typing
 from PIL import Image, ImageFont, ImageDraw
 import io
 import textwrap
 import random
+import re
+import aiohttp
 
 class Misc(commands.Cog, name="Misc"):
     """All your miscellaneous commands."""
     def __init__(self, bot):
         self.bot = bot
+        self.pattern = re.compile("(<:.*?:\d+>|:.*?:)")
 
     @commands.command(name="triangle", description="Onii-chan, look at this, I can make a pyramid out of emotes. (　＾∇＾)", usage="triangle [number of row] [emote 1] [emote 2 (optional)]")
     async def triangle(self, ctx, size: typing.Optional[int], emote1: typing.Union[commands.EmojiConverter, str], emote2: typing.Union[commands.EmojiConverter, str] = "<:trans:600929649253416980>"):
@@ -78,6 +82,23 @@ class Misc(commands.Cog, name="Misc"):
             return
         answer = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."]
         await ctx.send(random.choice(answer))
+
+    @commands.command(name="nitro", description="Onii-chan can use any emotes from any server that I'm also in.", usage="nitro [content]")
+    async def nitro(self, ctx, *, arg: str):
+        await ctx.message.delete()
+        webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")
+        if not webhook:
+            webhook = await ctx.channel.create_webhook(name="Emotes", reason="Automatically created webhook for bot.")
+        arg = self.pattern.split(arg)
+        for i in range(len(arg)):
+            if arg[i] and arg[i][0] == ':' and arg[i][-1] == ':':
+                emote = discord.utils.get(self.bot.emojis, name=arg[i][1:-1])
+                if emote:
+                    arg[i] = str(emote)
+        arg = "".join(arg)
+        async with aiohttp.ClientSession() as session:
+            w = Webhook.partial(webhook.id, webhook.token, adapter=AsyncWebhookAdapter(session))
+            await w.send(content=arg, username=ctx.author.display_name, avatar_url=ctx.author.avatar_url)
 
     async def text_wrap(self, text, maxwidth):
         text_arr = text.split()

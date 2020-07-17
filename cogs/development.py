@@ -2,10 +2,15 @@ import discord
 from discord.ext import commands
 import os
 import asyncio
+from discord import Webhook, AsyncWebhookAdapter
+import aiohttp
+import re
+from timeit import default_timer
 
 class Development(commands.Cog, name="Development", command_attrs = dict(hidden=True)):
     def __init__(self, bot):
         self.bot = bot
+        self.pattern = re.compile("(<:.*?:\d+>|:.*?:)")
 
     @commands.command(name="getcogcmd")
     @commands.is_owner()
@@ -42,9 +47,26 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
 
     @commands.command(name="test")
     @commands.is_owner()
-    async def testfunc(self, ctx, *, arg: int):
-        # embed = discord.Embed(color=int("%06x" % random.randint(0, 0xffffff), 16))
-        await ctx.send(arg)
+    async def testfunc(self, ctx, *, arg: str):
+        await ctx.message.delete()
+        webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")
+        if not webhook:
+            webhook = await ctx.channel.create_webhook(name="Emotes", reason="Automatically created webhook for bot.")
+        start = default_timer()
+        print(arg)
+        arg = self.pattern.split(arg)
+        print(arg)
+        for i in range(len(arg)):
+            if arg[i] and arg[i][0] == ':' and arg[i][-1] == ':':
+                emote = discord.utils.get(self.bot.emojis, name=arg[i][1:-1])
+                if emote:
+                    arg[i] = str(emote)
+        arg = "".join(arg)
+        print(arg)
+        print(default_timer() - start)
+        async with aiohttp.ClientSession() as session:
+            w = Webhook.partial(webhook.id, webhook.token, adapter=AsyncWebhookAdapter(session))
+            await w.send(content=arg, username=ctx.author.display_name, avatar_url=ctx.author.avatar_url)
 
 def setup(bot):
     bot.add_cog(Development(bot))
