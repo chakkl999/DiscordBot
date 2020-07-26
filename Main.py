@@ -3,7 +3,7 @@ from discord.ext import commands
 import os
 import sqlite3
 import pathlib
-import configparser
+from util.config import Config
 
 async def get_prefix(bot, message):
     current_prefix = cur.execute("SELECT prefix FROM prefixes WHERE server = ?", (message.guild.id,)).fetchone()
@@ -13,22 +13,25 @@ async def get_prefix(bot, message):
         current_prefix = default_prefix
     return commands.when_mentioned_or(current_prefix)(bot, message)
 
+pathlib.Path("./data").mkdir(parents=True, exist_ok=True)
 pathlib.Path("./data/data.db").touch(exist_ok=True)
 con = sqlite3.connect("./data/data.db")
 cur = con.cursor()
 
-config = configparser.ConfigParser()
-config.read("config.ini")
-try:
-    TOKEN = config["DEFAULT"]["Token"]
-    default_prefix = config["DEFAULT"]["Prefix"]
-except:
-    print("Error reading config.ini.\nPlease make sure the file exists and follows the structure shown in https://docs.python.org/3/library/configparser.html#supported-ini-file-structure\nThere should be a DEFAULT section with two keys, Token and Prefix.")
+config = Config("config.ini")
+config.read()
+if not config.successful:
+    print("Error reading config.ini.\nPlease make sure the file exists and follows the structure shown in https://docs.python.org/3/library/configparser.html#supported-ini-file-structure")
     exit(0)
 
-default_prefix = "!loli "
+TOKEN = config.token
+default_prefix = config.prefix
+if default_prefix[-1].isalnum():
+    default_prefix += " "
+
 bot = commands.Bot(command_prefix=get_prefix, description="Just a cute loli.")
 bot.remove_command('help')
+bot.owner_id = int(config.ownerid)
 
 @bot.event
 async def on_ready():
@@ -41,7 +44,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if not message.author.bot and message.guild:
+    if not message.author.bot and not message.guild:
         await bot.process_commands(message)
 
 @bot.command(name="load", description="Load a cog")
@@ -108,4 +111,7 @@ for filename in os.listdir('./cogs'):
             bot.load_extension(f"cogs.{filename[:-3]}")
         except Exception as e:
             print(f'{filename[:-3]} cannot be loaded. Error:{e}')
-bot.run(TOKEN)
+try:
+    bot.run(TOKEN)
+except discord.errors.LoginFailure:
+    print("Incorrect token.")
