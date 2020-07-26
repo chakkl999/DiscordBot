@@ -8,23 +8,48 @@ import textwrap
 import random
 import re
 import aiohttp
+from inspect import Parameter
 
 class Misc(commands.Cog, name="Misc"):
     """All your miscellaneous commands."""
     def __init__(self, bot):
         self.bot = bot
-        self.pattern = re.compile("(<:.*?:\d+>|:.*?:)")
+        self.searchPattern = re.compile("(<:.*?:\d+>|:.*?:)")
+        self.matchPattern = re.compile("^(<:.*?:\d+>|:.*?:|[^a-zA-Z0-9:<\-])$")
+        self.eightballAnswer = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."]
+        try:
+            self.font = ImageFont.truetype("./image/font.ttf", 20)
+            self.source = Image.open("./image/og.png").convert("RGBA")
+        except OSError:
+            print("Please make sure you have a font file in the image directory (font.ttf).\nYou don't need it if you don't care about the command.")
+            self.font = None
+            self.source = None
+        except FileNotFoundError:
+            print("Please make sure you have the base image (og.png).\nYou don't need it if you don't care about the command.")
+            self.source = None
 
     @commands.command(name="triangle", description="Onii-chan, look at this, I can make a pyramid out of emotes. (　＾∇＾)", usage="triangle [number of row] [emote 1] [emote 2 (optional)]")
-    async def triangle(self, ctx, size: typing.Optional[int], emote1: typing.Union[commands.EmojiConverter, str], emote2: typing.Union[commands.EmojiConverter, str] = "<:trans:600929649253416980>"):
-        """If you don't provide a second emote, it'll default to a transparent emote."""
-        if not size:
-            size = 5
+    async def triangle(self, ctx, size: int, emote1: typing.Union[commands.EmojiConverter, str], emote2: typing.Union[commands.EmojiConverter, str] = "<:trans:600929649253416980>"):
+        """If you don't provide a second emote, it'll default to a transparent emote.
+           The arguments must be an emote, otherwise, it will throw an error."""
         if size < 1:
             await ctx.send("Onii-chan, please enter a positive number.")
             return
         pyramid = ""
-        emote1, emote2 = str(emote1), str(emote2)
+        if self.matchPattern.match(emote1):
+            if emote1.startswith(":"):
+                first = discord.utils.get(self.bot.emojis, name=emote1[1:-1])
+                if first:
+                    emote1 = str(first)
+        else:
+            raise commands.BadArgument(Parameter("First emote argument not an emote.", Parameter.POSITIONAL_OR_KEYWORD, annotation=str))
+        if self.matchPattern.match(emote2):
+            if emote2.startswith(":"):
+                second = discord.utils.get(self.bot.emojis, name=emote2[1:-1])
+                if second:
+                    emote2 = str(second)
+        else:
+            raise commands.BadArgument(Parameter("Second emote argument not an emote.", Parameter.POSITIONAL_OR_KEYWORD, annotation=str))
         for i in range(size):
             pyramid += emote2 * (size - i - 1)
             pyramid += emote1 * (i * 2 + 1)
@@ -63,14 +88,15 @@ class Misc(commands.Cog, name="Misc"):
     @commands.command(name="warn", description="Onii-chan... what did you do...", usage="warn [reason for warn]")
     async def warn(self, ctx, *, arg: commands.clean_content):
         """Returns the ALO warn image with the reason you put"""
+        if not self.font or not self.source:
+            await ctx.send("Onii-chan didn't give me the image or font for this command so I can't do it ( ≧Д≦)")
+            return
         arg = await self.text_wrap(str(arg), 50)
-        font = ImageFont.truetype("./image/micross.ttf", 20)
-        source = Image.open("./image/og.png").convert("RGBA")
-        text = Image.new("RGBA", source.size, (255, 255, 255, 0))
+        text = Image.new("RGBA", self.source.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(text)
-        draw.text((90, 95), arg, font=font, fill=(200, 201, 203, 255))
+        draw.text((90, 95), arg, font=self.font, fill=(200, 201, 203, 255))
         with io.BytesIO() as buf:
-            Image.alpha_composite(source, text).save(buf, format="png")
+            Image.alpha_composite(self.source, text).save(buf, format="png")
             buf.seek(0)
             await ctx.send(file=discord.File(fp=buf, filename="warn.png"))
 
@@ -80,8 +106,7 @@ class Misc(commands.Cog, name="Misc"):
         if not arg:
             await ctx.send("Onii-chan, you need to ask the magic 8ball something.")
             return
-        answer = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."]
-        await ctx.send(random.choice(answer))
+        await ctx.send(random.choice(self.eightballAnswer))
 
     @commands.command(name="nitro", description="Onii-chan can use any emotes from any server that I'm also in.", usage="nitro [content]")
     async def nitro(self, ctx, *, arg: commands.clean_content):
@@ -91,7 +116,7 @@ class Misc(commands.Cog, name="Misc"):
         webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")
         if not webhook:
             webhook = await ctx.channel.create_webhook(name="Emotes", reason="Automatically created webhook for bot.")
-        arg = self.pattern.split(arg)
+        arg = self.searchPattern.split(arg)
         for i in range(len(arg)):
             if arg[i] and arg[i][0] == ':' and arg[i][-1] == ':':
                 emote = discord.utils.get(self.bot.emojis, name=arg[i][1:-1])

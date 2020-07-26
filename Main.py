@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 import sqlite3
 import pathlib
+import configparser
 
 async def get_prefix(bot, message):
     current_prefix = cur.execute("SELECT prefix FROM prefixes WHERE server = ?", (message.guild.id,)).fetchone()
@@ -15,14 +16,17 @@ async def get_prefix(bot, message):
 pathlib.Path("./data/data.db").touch(exist_ok=True)
 con = sqlite3.connect("./data/data.db")
 cur = con.cursor()
-default_prefix = "!loli "
 
+config = configparser.ConfigParser()
+config.read("config.ini")
 try:
-    with pathlib.Path("./data/token.txt").open() as f:
-        TOKEN = f.readline()
-except FileNotFoundError:
-    print("Make sure you have the 'token.txt' file with the bot's token.")
-    exit(1)
+    TOKEN = config["DEFAULT"]["Token"]
+    default_prefix = config["DEFAULT"]["Prefix"]
+except:
+    print("Error reading config.ini.\nPlease make sure the file exists and follows the structure shown in https://docs.python.org/3/library/configparser.html#supported-ini-file-structure\nThere should be a DEFAULT section with two keys, Token and Prefix.")
+    exit(0)
+
+default_prefix = "!loli "
 bot = commands.Bot(command_prefix=get_prefix, description="Just a cute loli.")
 bot.remove_command('help')
 

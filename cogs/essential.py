@@ -158,7 +158,7 @@ class Essential(commands.Cog, name="Essential"):
     @commands.command(name="invite", description="Onii-chan can invite me to their server.", usage="invite")
     async def invite_link(self, ctx):
         """Get the invite link to the bot."""
-        await ctx.send("https://discordapp.com/api/oauth2/authorize?client_id=591468206581874691&permissions=1342565584&scope=bot")
+        await ctx.send("https://discord.com/api/oauth2/authorize?client_id=591468206581874691&permissions=1946549329&scope=bot")
 
     async def check_command(self, command):
         for cog in self.cogs:
