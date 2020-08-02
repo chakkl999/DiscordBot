@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import os
 import sqlite3
 import pathlib
 from util.config import Config
@@ -97,12 +96,11 @@ async def reload(ctx, cog):
 @commands.is_owner()
 async def reload_all(ctx):
     fail = {}
-    for filename in os.listdir('./cogs'):
-        if filename.endswith(".py"):
-            try:
-                bot.reload_extension(f"cogs.{filename[:-3]}")
-            except Exception as e:
-                fail[filename[:-3]] = str(e)
+    for file in pathlib.Path("cogs").glob("*.py"):
+        try:
+            bot.reload_extension(f"cogs.{file.name[:-3]}")
+        except Exception as e:
+            fail[file.name[:-3]] = str(e)
     embed = discord.Embed(title="Success", description=f"All cogs have been reloaded." if not fail else "All cogs have been reloaded except")
     for cogs, error in fail.items():
         embed.add_field(name=cogs, value=error, inline=False)
@@ -114,12 +112,11 @@ async def quiting(ctx):
     await ctx.send("Shutting down.....")
     await bot.logout()
 
-for filename in os.listdir('./cogs'):
-    if filename.endswith(".py"):
-        try:
-            bot.load_extension(f"cogs.{filename[:-3]}")
-        except Exception as e:
-            print(f'{filename[:-3]} cannot be loaded. Error:{e}')
+for file in pathlib.Path("cogs").glob("*.py"):
+    try:
+        bot.load_extension(f"cogs.{file.name[:-3]}")
+    except Exception as e:
+        print(f'{file.name[:-3]} cannot be loaded. Error:{e}')
 try:
     bot.run(TOKEN)
 except discord.errors.LoginFailure:
