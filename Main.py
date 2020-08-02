@@ -15,6 +15,15 @@ async def get_prefix(bot, message):
 
 pathlib.Path("./data").mkdir(parents=True, exist_ok=True)
 pathlib.Path("./data/data.db").touch(exist_ok=True)
+
+if not pathlib.Path("config.ini").exists():
+    if pathlib.Path("configTemplate.ini").exists():
+        print("Config template found.\nMake sure you fill it out and rename it to config.ini.")
+        exit(1)
+    else:
+        print("Config or config template not found.\nMake sure you have config.ini.\nYou can find a template for it in the repository.")
+        exit(1)
+
 con = sqlite3.connect("./data/data.db")
 cur = con.cursor()
 
