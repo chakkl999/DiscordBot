@@ -44,7 +44,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if not message.author.bot and not message.guild:
+    if not message.author.bot and message.guild:
         await bot.process_commands(message)
 
 @bot.command(name="load", description="Load a cog")

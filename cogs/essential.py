@@ -132,7 +132,10 @@ class Essential(commands.Cog, name="Essential"):
     @commands.command(name="setprefix", description="Onii-chan can set a custom prefix for the server.", usage="set_prefix [prefix]")
     @commands.check(is_server_owner)
     async def set_prefix(self, ctx, *, arg: commands.clean_content):
-        """Sets the custom prefix for the server, cannot be empty. Only the server owner to set the prefix."""
+        """Sets the custom prefix for the server, cannot be empty. Only the server owner to set the prefix.
+           If the prefix ends in an alphanumeric character, it will automatically append a space to the end."""
+        if arg[-1].isalnum():
+            arg += " "
         if int(self.cursor.execute("SELECT EXISTS(SELECT 1 FROM prefixes WHERE server = ?)", (str(ctx.guild.id),)).fetchone()[0]):
             self.cursor.execute("UPDATE prefixes SET prefix = ? WHERE server = ?", (arg, str(ctx.guild.id)))
             self.conn.commit()

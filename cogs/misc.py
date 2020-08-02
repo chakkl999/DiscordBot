@@ -36,20 +36,8 @@ class Misc(commands.Cog, name="Misc"):
             await ctx.send("Onii-chan, please enter a positive number.")
             return
         pyramid = ""
-        if self.matchPattern.match(emote1):
-            if emote1.startswith(":"):
-                first = discord.utils.get(self.bot.emojis, name=emote1[1:-1])
-                if first:
-                    emote1 = str(first)
-        else:
-            raise commands.BadArgument(Parameter("First emote argument not an emote.", Parameter.POSITIONAL_OR_KEYWORD, annotation=str))
-        if self.matchPattern.match(emote2):
-            if emote2.startswith(":"):
-                second = discord.utils.get(self.bot.emojis, name=emote2[1:-1])
-                if second:
-                    emote2 = str(second)
-        else:
-            raise commands.BadArgument(Parameter("Second emote argument not an emote.", Parameter.POSITIONAL_OR_KEYWORD, annotation=str))
+        emote1 = await self.get_emote(emote1)
+        emote2 = await self.get_emote(emote2)
         for i in range(size):
             pyramid += emote2 * (size - i - 1)
             pyramid += emote1 * (i * 2 + 1)
@@ -152,6 +140,16 @@ class Misc(commands.Cog, name="Misc"):
         if per_line:
             final_text.append(per_line)
         return "\n".join(final_text)
+
+    async def get_emote(self, emote: str):
+        if self.matchPattern.match(emote):
+            if emote.startswith(":"):
+                result = discord.utils.get(self.bot.emojis, name=emote[1:-1])
+                if result:
+                    return str(result)
+        else:
+            raise commands.BadArgument(Parameter(f"Emote argument not an emote {str(emote)}", Parameter.POSITIONAL_OR_KEYWORD, annotation=str))
+        return emote
 
 def setup(bot):
     bot.add_cog(Misc(bot))
