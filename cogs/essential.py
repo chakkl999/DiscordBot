@@ -2,9 +2,14 @@ import discord
 from discord.ext import commands
 import asyncio
 import sqlite3
+from util import CustomException
 
-async def is_server_owner(ctx):
-    return ctx.author.id == ctx.guild.owner.id or ctx.author.id == 126132110145617921
+def is_server_owner():
+    async def predicate(ctx):
+        if ctx.author.id != ctx.guild.owner.id or ctx.author.id != ctx.bot.owner_id:
+            raise CustomException.ServerOwnerOnly("Onii-chan, only server owner can use this command. (｡>口<｡)!")
+        return True
+    return commands.check(predicate)
 
 class Essential(commands.Cog, name="Essential"):
     """Essential commands that you'll need."""
@@ -130,7 +135,7 @@ class Essential(commands.Cog, name="Essential"):
                     await msg.edit(embed=embed)
 
     @commands.command(name="setprefix", description="Onii-chan can set a custom prefix for the server.", usage="set_prefix [prefix]")
-    @commands.check(is_server_owner)
+    @is_server_owner()
     async def set_prefix(self, ctx, *, arg: commands.clean_content):
         """Sets the custom prefix for the server, cannot be empty. Only the server owner to set the prefix.
            If the prefix ends in an alphanumeric character, it will automatically append a space to the end."""
@@ -145,7 +150,7 @@ class Essential(commands.Cog, name="Essential"):
         await ctx.message.add_reaction("✅")
 
     @commands.command(name="removeprefix", description="Onii-chan can remove the custom prefix.", usage="remove_prefix")
-    @commands.check(is_server_owner)
+    @is_server_owner()
     async def remove_prefix(self, ctx):
         """Remove the custom prefix. Reverting back to the default prefix which is !loli . Only the server owner can remove the prefix."""
         self.cursor.execute("DELETE FROM prefixes WHERE server = ?", (ctx.guild.id,))

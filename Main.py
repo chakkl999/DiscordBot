@@ -48,7 +48,7 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('-------------')
-    await bot.change_presence(activity=discord.Game("with onii-chan"))
+    await bot.change_presence(activity=discord.Game(f"with onii-chan"))
 
 @bot.event
 async def on_message(message):

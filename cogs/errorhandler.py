@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime
+from util import CustomException
 
 class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=True)):
     def __init__(self, bot):
@@ -8,7 +9,8 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         self.errors = {commands.NotOwner: self.noPermission, commands.MissingPermissions: self.noPermission,
                        commands.errors.CommandOnCooldown: self.cooldown, commands.MissingRequiredArgument: self.missingArg,
                        commands.BadArgument: self.badArg, commands.NSFWChannelRequired: self.nsfw,
-                       commands.BotMissingPermissions: self.missingPermissions,
+                       commands.BotMissingPermissions: self.missingPermissions, commands.CheckAnyFailure: self.checkAnyFail,
+                       CustomException.ServerOwnerOnly: self.serverOwnerOnly,
                        commands.errors.CommandNotFound: self.ignore}
 
     @commands.Cog.listener()
@@ -52,6 +54,13 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
     async def missingPermissions(self, ctx, error):
         missing = '\n'.join(error.missing_perms)
         await ctx.send(f"Onii-chan, I'm missing the permission to do this command. {missing}")
+
+    async def checkAnyFail(self, ctx, error):
+        listOfChecksFailed = "\n".join([str(e) for e in error.errors])
+        await ctx.send(f"Onii-chan, you do not have permission to use this command. (｡>口<｡)!\nReason(s): \n{listOfChecksFailed}")
+
+    async def serverOwnerOnly(self, ctx, error):
+        await ctx.send(str(error))
 
     async def ignore(self, ctx, error):
         pass
