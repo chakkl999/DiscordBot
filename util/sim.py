@@ -1,5 +1,4 @@
 from PIL import Image
-import requests
 from io import BytesIO
 import pathlib
 from imagehash import average_hash
@@ -79,7 +78,7 @@ def checklink(file: str):
         print("It's clean")
 
 
-def checklinkall():
+def checkalllink():
         links = {}
         try:
             for file in BASEDIR.joinpath("links").glob("*.txt"):
@@ -119,15 +118,13 @@ async def main():
             file = str(input("Enter a file name(Enter 'all' for link check to check all file for dup): ")).upper()
             if which == 1:
                 if file == "ALL":
-                    checklinkall()
+                    checkalllink()
                 else:
                     checklink(file)
             elif which == 2:
                 await imageSimAsync(file, session)
             else:
                 print("Not an option.")
-    except IOError as e:
-        print(e)
     except Exception as e:
         print(e)
     await session.close()

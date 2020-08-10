@@ -171,10 +171,15 @@ class Essential(commands.Cog, name="Essential"):
         return None
 
     async def isCog(self, cog):
+        """
         temp = self.bot.get_cog(cog)
         if temp:
             return temp
         return None
+        """
+        if cog not in self.cogs:
+            return None
+        return self.bot.get_cog(cog)
 
     def cog_unload(self):
         self.conn.commit();

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import os
+import pathlib
 import asyncio
 from discord import Webhook, AsyncWebhookAdapter
 import aiohttp
@@ -27,9 +27,8 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
     @commands.is_owner()
     async def getallcogs(self, ctx):
         allcogs = []
-        for filename in os.listdir('./cogs'):
-            if filename.endswith(".py"):
-                allcogs.append(filename[:-3].capitalize())
+        for file in pathlib.Path("cogs").glob("*.py"):
+            allcogs.append(file.name[:-3].capitalize())
         embed = discord.Embed(title="Cogs:", description="\n".join(allcogs))
         await ctx.send(embed=embed)
 
