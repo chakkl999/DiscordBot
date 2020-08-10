@@ -59,8 +59,8 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
     async def unknown(self, ctx, error):
         await ctx.send(f"An unknown error has occurred. Please tell onii-chan to check #error.")
         embed = discord.Embed(title=f"Server: {ctx.guild.name}")
-        embed.add_field(name=f"Command: {ctx.command.name}", value=f"Message: {ctx.message.content if len(ctx.message.content) <= 1024 else 'Too long, Abbreviated: ' + ctx.message.content[0:100]}", inline=False)
-        embed.add_field(name="Error:", value=f"{str(error.__class__)}\n{str(error)}", inline=False)
+        embed.add_field(name=f"Command: {ctx.command.name}", value=f"Message: {ctx.message.content if len(ctx.message.content) <= 1024 else 'Too long, Abbreviated: ' + ctx.message.content[0:500]}...", inline=False)
+        embed.add_field(name="Error:", value=repr(error), inline=False)
         embed.set_footer(text=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         await self.bot.get_guild(414125981087825920).get_channel(632118836057079808).send(embed=embed)
 
