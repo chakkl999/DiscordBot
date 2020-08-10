@@ -8,6 +8,7 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         self.errors = {commands.NotOwner: self.noPermission, commands.MissingPermissions: self.noPermission,
                        commands.errors.CommandOnCooldown: self.cooldown, commands.MissingRequiredArgument: self.missingArg,
                        commands.BadArgument: self.badArg, commands.NSFWChannelRequired: self.nsfw,
+                       commands.BotMissingPermissions: self.missingPermissions,
                        commands.errors.CommandNotFound: self.ignore}
 
     @commands.Cog.listener()
@@ -47,6 +48,10 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
 
     async def nsfw(self, ctx, error):
         await ctx.send("With the nature of this command, in order to avoid the mishaps of including nsfw images, this command is disabled in channels that are not marked as nsfw. I apologize for this inconvenience.")
+
+    async def missingPermissions(self, ctx, error):
+        missing = '\n'.join(error.missing_perms)
+        await ctx.send(f"Onii-chan, I'm missing the permission to do this command. {missing}")
 
     async def ignore(self, ctx, error):
         pass
