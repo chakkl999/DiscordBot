@@ -21,7 +21,7 @@ class Game(commands.Cog, name="Game"):
         msg = await ctx.send("```React to this message to join the game of blackjack.```")
         await msg.add_reaction("✅")
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(15)
 
         msg = await ctx.fetch_message(msg.id)
         users_list = await self.get_reaction_user(msg).users().flatten()
@@ -72,7 +72,7 @@ class Game(commands.Cog, name="Game"):
 
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=5.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=10, check=check)
             except asyncio.TimeoutError:
                 reaction = "🇸"
                 user = list(users)[turn]
