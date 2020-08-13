@@ -2,12 +2,12 @@ import discord
 from discord.ext import commands
 import asyncio
 import sqlite3
-from util import CustomException
+from util import customException
 
 def is_server_owner():
     async def predicate(ctx):
         if ctx.author.id != ctx.guild.owner.id or ctx.author.id != ctx.bot.owner_id:
-            raise CustomException.ServerOwnerOnly("Onii-chan, only server owner can use this command. (｡>口<｡)!")
+            raise customException.ServerOwnerOnly("Onii-chan, only server owner can use this command. (｡>口<｡)!")
         return True
     return commands.check(predicate)
 

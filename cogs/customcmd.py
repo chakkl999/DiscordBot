@@ -43,8 +43,13 @@ class Customcmd(commands.Cog, name="Customcmd"):
             await ctx.send("Onii-chan, that custom command doesn't exist.")
             return
         embed = discord.Embed(title=f"Information for {info[2]}")
-        embed.add_field(name="Owner:", value=ctx.guild.get_member(int(info[0])) or "Unknown owner.", inline=False)
-        embed.add_field(name="Author:", value=ctx.guild.get_member(int(info[1])) or "Unknown author.", inline=False)
+        if info[0] == info[1]:
+            owner = author = ctx.guild.get_member(int(info[0]))
+        else:
+            owner = ctx.guild.get_member(int(info[0]))
+            author = ctx.guild.get_member(int(info[1]))
+        embed.add_field(name="Owner:", value=owner or "Unknown owner.", inline=False)
+        embed.add_field(name="Author:", value=author or "Unknown author.", inline=False)
         embed.add_field(name="Content:", value=info[3])
         await ctx.send(embed=embed)
 

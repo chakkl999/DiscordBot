@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 import datetime
-from util import CustomException
+from util import customException
+import traceback
 
 class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=True)):
     def __init__(self, bot):
@@ -10,7 +11,7 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
                        commands.errors.CommandOnCooldown: self.cooldown, commands.MissingRequiredArgument: self.missingArg,
                        commands.BadArgument: self.badArg, commands.NSFWChannelRequired: self.nsfw,
                        commands.BotMissingPermissions: self.missingPermissions, commands.CheckAnyFailure: self.checkAnyFail,
-                       CustomException.ServerOwnerOnly: self.serverOwnerOnly,
+                       customException.ServerOwnerOnly: self.serverOwnerOnly,
                        commands.errors.CommandNotFound: self.ignore}
 
     @commands.Cog.listener()
@@ -43,21 +44,21 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         await ctx.send(f"Onii-chan can't use this command yet. Try again in {int(error.retry_after)} second(s). (⁎˃ᆺ˂)")
 
     async def missingArg(self, ctx, error):
-        await ctx.send(f"Onii-chan, make sure you have the required arguments. Use `{ctx.prefix}help {ctx.command.parent.name + ' ' + ctx.command.name if ctx.command.parent else ctx.command.name}` for more details.")
+        await ctx.send(f"Onii-chan, make sure you have the required arguments. Use `{ctx.prefix}help {ctx.command.qualified_name}` for more details.")
 
     async def badArg(self, ctx, error):
-        await ctx.send(f"Onii-chan, make sure you have the correct arguments. Use `{ctx.prefix}help {ctx.command.parent.name + ' ' + ctx.command.name if ctx.command.parent else ctx.command.name}` for more details.")
+        await ctx.send(f"Onii-chan, make sure you have the correct arguments. Use `{ctx.prefix}help {ctx.command.qualified_name}` for more details.")
 
     async def nsfw(self, ctx, error):
         await ctx.send("With the nature of this command, in order to avoid the mishaps of including nsfw images, this command is disabled in channels that are not marked as nsfw. I apologize for this inconvenience.")
 
     async def missingPermissions(self, ctx, error):
         missing = '\n'.join(error.missing_perms)
-        await ctx.send(f"Onii-chan, I'm missing the permission to do this command. {missing}")
+        await ctx.send(f"Onii-chan, I'm missing the permission(s) to do this command. ```\n{missing}```")
 
     async def checkAnyFail(self, ctx, error):
         listOfChecksFailed = "\n".join([str(e) for e in error.errors])
-        await ctx.send(f"Onii-chan, you do not have permission to use this command. (｡>口<｡)!\nReason(s): \n{listOfChecksFailed}")
+        await ctx.send(f"Onii-chan, you do not have permission to use this command. (｡>口<｡)!```\nReason(s): \n{listOfChecksFailed}```")
 
     async def serverOwnerOnly(self, ctx, error):
         await ctx.send(str(error))
@@ -72,6 +73,7 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         embed.add_field(name="Error:", value=repr(error), inline=False)
         embed.set_footer(text=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         await self.bot.get_guild(414125981087825920).get_channel(632118836057079808).send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(ErrorHandler(bot))
