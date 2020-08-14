@@ -12,7 +12,7 @@ class Game(commands.Cog, name="Game"):
         self.emotes = ["🇭", "🇩" ,"🇸"]
 
     @commands.command(name="blackjack", description="Onii-chan, want to play a game of blackjack with me?", usage="blackjack")
-    @commands.cooldown(rate=1, per=0.0, type=commands.BucketType.guild)
+    @commands.max_concurrency(number=1, per=commands.BucketType.guild, wait=False)
     async def blackjack(self, ctx):
         """A game of blackjack.
         When the game starts, users have 15 seconds to react to the message to join the game.
@@ -81,23 +81,27 @@ class Game(commands.Cog, name="Game"):
             if str(reaction) == "🇭":
                 users[user][1].append(self.randomCard())
                 mention = await ctx.send(content=f"{list(users)[turn].mention} You got {users[user][1][-1]}. Total: {self.getCardValue(users[user][1])}")
-                await asyncio.sleep(3)
-                await mention.delete()
                 if self.getCardValue(users[user][1]) > 21:
                     busted = await ctx.send(content=f"{list(users)[turn].mention} Busted.")
                     users[user][0] = True
                     await asyncio.sleep(3)
                     await busted.delete()
+                    await mention.delete()
+                else:
+                    await asyncio.sleep(3)
+                    await mention.delete()
             elif str(reaction) == "🇩":
                 users[user][1].append(self.randomCard())
                 mention = await ctx.send(content=f"{list(users)[turn].mention} You got {users[user][1][-1]}. Total: {self.getCardValue(users[user][1])}")
-                await asyncio.sleep(3)
-                await mention.delete()
                 users[user][0] = True
                 if self.getCardValue(users[user][1]) > 21:
                     busted = await ctx.send(content=f"{list(users)[turn].mention} Busted.")
                     await asyncio.sleep(3)
                     await busted.delete()
+                    await mention.delete()
+                else:
+                    await asyncio.sleep(3)
+                    await mention.delete()
             else:
                 users[user][0] = True
             if self.isOver(users):

@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import datetime
 from util import customException
-import traceback
 
 class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=True)):
     def __init__(self, bot):
@@ -11,7 +10,7 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
                        commands.errors.CommandOnCooldown: self.cooldown, commands.MissingRequiredArgument: self.missingArg,
                        commands.BadArgument: self.badArg, commands.NSFWChannelRequired: self.nsfw,
                        commands.BotMissingPermissions: self.missingPermissions, commands.CheckAnyFailure: self.checkAnyFail,
-                       customException.ServerOwnerOnly: self.serverOwnerOnly,
+                       customException.ServerOwnerOnly: self.serverOwnerOnly, commands.MaxConcurrencyReached: self.commandMaxConcurrency,
                        commands.errors.CommandNotFound: self.ignore}
 
     @commands.Cog.listener()
@@ -62,6 +61,9 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
 
     async def serverOwnerOnly(self, ctx, error):
         await ctx.send(str(error))
+
+    async def commandMaxConcurrency(self, ctx, error):
+        await ctx.send("Sorry onii-chan, this command is currently being use. (⌯˃̶᷄ ﹏ ˂̶᷄⌯)ﾟ")
 
     async def ignore(self, ctx, error):
         pass
