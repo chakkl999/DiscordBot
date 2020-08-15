@@ -47,7 +47,7 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
     @commands.command(name="test")
     @commands.is_owner()
     async def testfunc(self, ctx, *, arg: str):
-        print(arg)
+        print(await ctx.bot.get_prefix(ctx.message))
         return
         await ctx.message.delete()
         webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")

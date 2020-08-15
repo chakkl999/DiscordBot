@@ -20,8 +20,9 @@ class Essential(commands.Cog, name="Essential"):
         self.conn = sqlite3.connect("./data/data.db")
         self.cursor = self.conn.cursor()
 
-    def mainMenu(self, ctx):
-        prefix = ctx.prefix
+    async def mainMenu(self, ctx):
+        prefix = await ctx.bot.get_prefix(ctx.message)
+        prefix = prefix[2]
         embed = discord.Embed(title="Help", description=f"Prefix = {prefix}\nUsage: {prefix}command. \nReact with :zero: to get back to this menu.\nReact with :wastebasket: to delete this message.",
                               color=discord.colour.Color.blue())
         embed.set_author(name="A cute loli",
@@ -50,8 +51,10 @@ class Essential(commands.Cog, name="Essential"):
             if arg:
                 command = await self.check_command(arg)
                 if command:
+                    prefix = await ctx.bot.get_prefix(ctx.message)
+                    prefix = prefix[2]
                     embed = discord.Embed(title='Command', description=f"Help for {command.qualified_name}", color=discord.Color.blurple())
-                    embed.add_field(name=f"Usage: {ctx.prefix}{command.usage}", value=f"```\n{command.help}\n```", inline=False)
+                    embed.add_field(name=f"Usage: {prefix}{command.usage}", value=f"```\n{command.help}\n```", inline=False)
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send("I'm not sure there's a category with that name, onii-chan.")
@@ -101,8 +104,10 @@ class Essential(commands.Cog, name="Essential"):
         if arg:
             command = await self.check_command(arg)
             if command:
+                prefix = await ctx.bot.get_prefix(ctx.message)
+                prefix = prefix[2]
                 embed = discord.Embed(title='Command', description=f"Help for {command.qualified_name}", color=discord.Color.blurple())
-                embed.add_field(name=f"Usage: {ctx.prefix}{command.usage}", value=f"```\n{command.help}\n```", inline=False)
+                embed.add_field(name=f"Usage: {prefix}{command.usage}", value=f"```\n{command.help}\n```", inline=False)
                 await ctx.message.author.send(embed=embed)
             else:
                 await ctx.send("I'm not sure there's a category with that name, onii-chan.")

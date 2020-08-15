@@ -43,10 +43,14 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         await ctx.send(f"Onii-chan can't use this command yet. Try again in {int(error.retry_after)} second(s). (⁎˃ᆺ˂)")
 
     async def missingArg(self, ctx, error):
-        await ctx.send(f"Onii-chan, make sure you have the required arguments. Use `{ctx.prefix}help {ctx.command.qualified_name}` for more details.")
+        prefix = await ctx.bot.get_prefix(ctx.message)
+        prefix = prefix[2]
+        await ctx.send(f"Onii-chan, make sure you have the required arguments. Use `{prefix}help {ctx.command.qualified_name}` for more details.")
 
     async def badArg(self, ctx, error):
-        await ctx.send(f"Onii-chan, make sure you have the correct arguments. Use `{ctx.prefix}help {ctx.command.qualified_name}` for more details.")
+        prefix = await ctx.bot.get_prefix(ctx.message)
+        prefix = prefix[2]
+        await ctx.send(f"Onii-chan, make sure you have the correct arguments. Use `{prefix}help {ctx.command.qualified_name}` for more details.")
 
     async def nsfw(self, ctx, error):
         await ctx.send("With the nature of this command, in order to avoid the mishaps of including nsfw images, this command is disabled in channels that are not marked as nsfw. I apologize for this inconvenience.")
@@ -63,7 +67,7 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         await ctx.send(str(error))
 
     async def commandMaxConcurrency(self, ctx, error):
-        await ctx.send("Sorry onii-chan, this command is currently being use. (⌯˃̶᷄ ﹏ ˂̶᷄⌯)ﾟ")
+        await ctx.send("Sorry onii-chan, this command is currently being used. (⌯˃̶᷄ ﹏ ˂̶᷄⌯)ﾟ")
 
     async def ignore(self, ctx, error):
         pass
