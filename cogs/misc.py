@@ -55,10 +55,16 @@ class Misc(commands.Cog, name="Misc"):
         await ctx.send(arg)
 
     @commands.command(name="avatar", description="I can show onii-chan the pfp of the person you mention or yourself.", usage="avatar [mention (optional)]")
-    async def avatar(self, ctx, *, mention: typing.Optional[commands.MemberConverter] = None):
-        """If you don't mention anyone or the bot can't find the person, it'll return your pfp instead."""
+    async def avatar(self, ctx, *, mention=None):
+        """If you don't mention anyone, it'll return your pfp instead."""
         if not mention:
             mention = ctx.message.author
+        else:
+            try:
+                mention = await commands.MemberConverter().convert(ctx, mention)
+            except commands.BadArgument:
+                await ctx.send("Onii-chan, I can't find that person. (⌯˃̶᷄ ﹏ ˂̶᷄⌯)")
+                return
         embed = discord.Embed(title=str(mention), color=discord.colour.Color.gold())
         embed.set_image(url=str(mention.avatar_url))
         await ctx.send(embed=embed)
