@@ -26,18 +26,19 @@ class Misc(commands.Cog, name="Misc"):
             self.source = None
         except FileNotFoundError:
             print("Please make sure you have the base image (og.png).\nYou don't need it if you don't care about the command.")
+            self.font = None
             self.source = None
 
     @commands.command(name="triangle", description="Onii-chan, look at this, I can make a pyramid out of emotes. (　＾∇＾)", usage="triangle [number of row] [emote 1] [emote 2 (optional)]")
-    async def triangle(self, ctx, size: int, emote1: typing.Union[commands.EmojiConverter, str], emote2: typing.Union[commands.EmojiConverter, str] = "<:trans:600929649253416980>"):
+    async def triangle(self, ctx, size: int, emote1: str, emote2: str = "<:trans:600929649253416980>"):
         """If you don't provide a second emote, it'll default to a transparent emote.
            The arguments must be an emote, otherwise, it will throw an error."""
         if size < 1:
             await ctx.send("Onii-chan, please enter a positive number.")
             return
         pyramid = ""
-        emote1 = await self.get_emote(emote1)
-        emote2 = await self.get_emote(emote2)
+        emote1 = self.get_emote(emote1)
+        emote2 = self.get_emote(emote2)
         for i in range(size):
             pyramid += emote2 * (size - i - 1)
             pyramid += emote1 * (i * 2 + 1)
@@ -82,10 +83,10 @@ class Misc(commands.Cog, name="Misc"):
     @commands.command(name="warn", description="Onii-chan... what did you do...", usage="warn [reason for warn]")
     async def warn(self, ctx, *, arg: commands.clean_content):
         """Returns the ALO warn image with the reason you put"""
-        if not self.font or not self.source:
+        if not self.font and not self.source:
             await ctx.send("Onii-chan didn't give me the image or font for this command so I can't do it ( ≧Д≦)")
             return
-        arg = await self.text_wrap(str(arg), 50)
+        arg = self.text_wrap(str(arg), 50)
         text = Image.new("RGBA", self.source.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(text)
         draw.text((90, 95), arg, font=self.font, fill=(200, 201, 203, 255))
@@ -121,7 +122,7 @@ class Misc(commands.Cog, name="Misc"):
             w = Webhook.partial(webhook.id, webhook.token, adapter=AsyncWebhookAdapter(session))
             await w.send(content=arg, username=ctx.author.display_name, avatar_url=ctx.author.avatar_url)
 
-    async def text_wrap(self, text, maxwidth):
+    def text_wrap(self, text, maxwidth):
         text_arr = text.split()
         per_line = ""
         final_text = []
@@ -147,14 +148,14 @@ class Misc(commands.Cog, name="Misc"):
             final_text.append(per_line)
         return "\n".join(final_text)
 
-    async def get_emote(self, emote: str):
+    def get_emote(self, emote: str):
         if self.matchPattern.match(emote):
             if emote.startswith(":"):
                 result = discord.utils.get(self.bot.emojis, name=emote[1:-1])
                 if result:
                     return str(result)
         else:
-            raise commands.BadArgument(Parameter(f"Emote argument not an emote {str(emote)}", Parameter.POSITIONAL_OR_KEYWORD, annotation=str))
+            raise commands.BadArgument(f"Emote argument not an emote {str(emote)}")
         return emote
 
 def setup(bot):
