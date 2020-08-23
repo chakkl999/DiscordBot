@@ -11,6 +11,7 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
     def __init__(self, bot):
         self.bot = bot
         self.pattern = re.compile("(<:.*?:\d+>|:.*?:)")
+        self.emotes = ["⏪", "◀", "▶", "⏩"]
 
     @commands.command(name="getcogcmd")
     @commands.is_owner()
@@ -47,7 +48,11 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
     @commands.command(name="test")
     @commands.is_owner()
     async def testfunc(self, ctx, *, arg: str):
-        print(await ctx.bot.get_prefix(ctx.message))
+        if arg == '1':
+            await asyncio.gather(*[ctx.message.add_reaction(e) for e in self.emotes])
+        else:
+            for e in self.emotes:
+                await ctx.message.add_reaction(e)
         return
         await ctx.message.delete()
         webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")

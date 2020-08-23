@@ -8,7 +8,6 @@ import textwrap
 import random
 import re
 import aiohttp
-from inspect import Parameter
 
 class Misc(commands.Cog, name="Misc"):
     """All your miscellaneous commands."""

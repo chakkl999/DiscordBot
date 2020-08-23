@@ -63,52 +63,53 @@ class Game(commands.Cog, name="Game"):
                 for user in natural_blackjack:
                     users[user].standing()
 
-        await self.addReaction(msg)
-        mention = await ctx.send(f"{list(users)[turn].mention} It's your turn.")
-
-        def check(reaction, user):
-            return user == list(users)[turn] and str(reaction) in self.emotes and reaction.message.id == msg.id
-
-        while True:
-            try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=10, check=check)
-            except asyncio.TimeoutError:
-                reaction = "🇸"
-                user = list(users)[turn]
-            await msg.remove_reaction(reaction, user)
-            await mention.delete()
-            if str(reaction) == "🇭":
-                users[user].addRandomCard(1)
-                mention = await ctx.send(content=f"{list(users)[turn].mention} You got {users[user].hands[-1]}. Total: {users[user].getCardValue()}")
-                if users[user].getCardValue() > 21:
-                    busted = await ctx.send(content=f"{list(users)[turn].mention} Busted.")
-                    users[user].standing()
-                    await asyncio.sleep(3)
-                    await busted.delete()
-                    await mention.delete()
-                else:
-                    await asyncio.sleep(3)
-                    await mention.delete()
-            elif str(reaction) == "🇩":
-                users[user].addRandomCard(1)
-                mention = await ctx.send(content=f"{list(users)[turn].mention} You got {users[user].hands[-1]}. Total: {users[user].getCardValue()}")
-                users[user].standing()
-                if users[user].getCardValue() > 21:
-                    busted = await ctx.send(content=f"{list(users)[turn].mention} Busted.")
-                    await asyncio.sleep(3)
-                    await busted.delete()
-                    await mention.delete()
-                else:
-                    await asyncio.sleep(3)
-                    await mention.delete()
-            else:
-                users[user].standing()
-            if self.isOver(users):
-                break
-            turn = self.getNextTurn(users, turn)
-            self.displayUserCard(users, turn, embed)
-            await msg.edit(embed=embed)
+        if not self.isOver(users):
+            await self.addReaction(msg)
             mention = await ctx.send(f"{list(users)[turn].mention} It's your turn.")
+
+            def check(reaction, user):
+                return user == list(users)[turn] and str(reaction) in self.emotes and reaction.message.id == msg.id
+
+            while True:
+                try:
+                    reaction, user = await self.bot.wait_for('reaction_add', timeout=10, check=check)
+                except asyncio.TimeoutError:
+                    reaction = "🇸"
+                    user = list(users)[turn]
+                await msg.remove_reaction(reaction, user)
+                await mention.delete()
+                if str(reaction) == "🇭":
+                    users[user].addRandomCard(1)
+                    mention = await ctx.send(content=f"{list(users)[turn].mention} You got {users[user].hands[-1]}. Total: {users[user].getCardValue()}")
+                    if users[user].getCardValue() > 21:
+                        busted = await ctx.send(content=f"{list(users)[turn].mention} Busted.")
+                        users[user].standing()
+                        await asyncio.sleep(3)
+                        await busted.delete()
+                        await mention.delete()
+                    else:
+                        await asyncio.sleep(3)
+                        await mention.delete()
+                elif str(reaction) == "🇩":
+                    users[user].addRandomCard(1)
+                    mention = await ctx.send(content=f"{list(users)[turn].mention} You got {users[user].hands[-1]}. Total: {users[user].getCardValue()}")
+                    users[user].standing()
+                    if users[user].getCardValue() > 21:
+                        busted = await ctx.send(content=f"{list(users)[turn].mention} Busted.")
+                        await asyncio.sleep(3)
+                        await busted.delete()
+                        await mention.delete()
+                    else:
+                        await asyncio.sleep(3)
+                        await mention.delete()
+                else:
+                    users[user].standing()
+                if self.isOver(users):
+                    break
+                turn = self.getNextTurn(users, turn)
+                self.displayUserCard(users, turn, embed)
+                await msg.edit(embed=embed)
+                mention = await ctx.send(f"{list(users)[turn].mention} It's your turn.")
 
         over = await ctx.send("The game is over, dealer is revealing their hand.")
         await asyncio.sleep(2)
