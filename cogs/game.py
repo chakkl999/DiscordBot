@@ -8,7 +8,7 @@ class Game(commands.Cog, name="Game"):
     def __init__(self, bot):
         self.bot = bot
         self.emotes = ["🇭", "🇩" ,"🇸"]
-        self.task = None
+        self.task = {}
 
     @commands.command(name="blackjack", description="Onii-chan, want to play a game of blackjack with me?", usage="blackjack")
     async def blackjack(self, ctx):
@@ -16,32 +16,23 @@ class Game(commands.Cog, name="Game"):
         When the game starts, users have 15 seconds to react to the message to join the game.
         During the game, each player have 10 seconds to decide on their action (hit, double down, stand).
         """
-        if self.task is None:
-            self.task = asyncio.create_task(self.blackjackhelper(ctx))
-        else:
-            raise commands.MaxConcurrencyReached(1, commands.BucketType.guild)
-        try:
-            await self.task
-        except asyncio.CancelledError:
-            await ctx.send("Blackjack game is cancalled.")
-            pass
-        self.task = None
+        await self._call_helper(ctx, self._blackjackhelper, "Blackjack game is cancalled.")
 
     @commands.command(name="cancel")
     @commands.is_owner()
     async def cancel(self, ctx):
-        if self.task is not None:
-            self.task.cancel()
-        self.task = None
+        if self.task.get(ctx.guild.id, None) is not None:
+            self.task[ctx.guild.id].cancel()
+        self.task[ctx.guild.id] = None
 
-    async def blackjackhelper(self, ctx):
+    async def _blackjackhelper(self, ctx):
         msg = await ctx.send("```React to this message to join the game of blackjack.```")
         await msg.add_reaction("✅")
 
         await asyncio.sleep(15)
 
         msg = await ctx.fetch_message(msg.id)
-        users_list = await self.get_reaction_user(msg).users().flatten()
+        users_list = await self._get_reaction_user(msg).users().flatten()
         for index, user in enumerate(users_list):
             if user.bot:
                 users_list.pop(index)
@@ -66,7 +57,7 @@ class Game(commands.Cog, name="Game"):
         embed.add_field(name="Dealer:", value=f"{dealer.hands[0]}/Hidden\n", inline=False)
         for i in range(len(users)):
             embed.add_field(name="", value="", inline=False)
-        self.displayUserCard(users, turn, embed)
+        self._displayUserCard(users, turn, embed)
         msg = await ctx.send(embed=embed)
 
         natural_blackjack = []
@@ -82,8 +73,8 @@ class Game(commands.Cog, name="Game"):
                 for user in natural_blackjack:
                     users[user].standing()
 
-        if not self.isOver(users):
-            await self.addReaction(msg)
+        if not self._isOver(users):
+            await self._addReaction(msg)
             mention = await ctx.send(f"{list(users)[turn].mention} It's your turn.")
 
             def check(reaction, user):
@@ -123,10 +114,10 @@ class Game(commands.Cog, name="Game"):
                         await mention.delete()
                 else:
                     users[user].standing()
-                if self.isOver(users):
+                if self._isOver(users):
                     break
-                turn = self.getNextTurn(users, turn)
-                self.displayUserCard(users, turn, embed)
+                turn = self._getNextTurn(users, turn)
+                self._displayUserCard(users, turn, embed)
                 await msg.edit(embed=embed)
                 mention = await ctx.send(f"{list(users)[turn].mention} It's your turn.")
 
@@ -134,7 +125,7 @@ class Game(commands.Cog, name="Game"):
         await asyncio.sleep(2)
         await over.delete()
 
-        self.displayUserCard(users, -1, embed)
+        self._displayUserCard(users, -1, embed)
         embed.set_field_at(0, name="```>Dealer:```", value=f"```{'/'.join(dealer.hands)}\nTotal:{dealer.getCardValue()}```", inline=False)
         await msg.delete()
         msg = await ctx.send(embed=embed)
@@ -146,20 +137,20 @@ class Game(commands.Cog, name="Game"):
             await msg.edit(embed=embed)
             await asyncio.sleep(1.5)
 
-        winner = self.win(users, dealer.getCardValue())
+        winner = self._win(users, dealer.getCardValue())
 
         if winner:
             await ctx.send(f"Congrats {'/'.join([user.mention for user in winner])}. You won.")
         else:
             await ctx.send("No one won.")
 
-    def get_reaction_user(self, msg):
+    def _get_reaction_user(self, msg):
         for reaction in msg.reactions:
             if str(reaction.emoji) == "✅":
                 return reaction
         return None
 
-    def displayUserCard(self, users: dict, turn: int, embed: discord.Embed):
+    def _displayUserCard(self, users: dict, turn: int, embed: discord.Embed):
         for i, (user, info) in enumerate(users.items()):
             name = f"{user.display_name}:"
             value = f"{'/'.join(info.hands)}\nTotal:{info.getCardValue()}"
@@ -168,29 +159,44 @@ class Game(commands.Cog, name="Game"):
                 value = "```"+value+"```"
             embed.set_field_at(i+1, name=name, value=value, inline=False)
 
-    async def addReaction(self, message):
+    async def _addReaction(self, message):
         for emote in self.emotes:
             await message.add_reaction(emote)
 
-    def isOver(self, users):
+    def _isOver(self, users):
         for v in users.values():
             if v.stand == False:
                 return False
         return True
 
-    def getNextTurn(self, users, turn):
+    def _getNextTurn(self, users, turn):
         while True:
             turn = (turn + 1) % len(users)
             if users[list(users)[turn]].stand == False:
                 return turn
 
-    def win(self, users, dealer):
+    def _win(self, users, dealer):
         winner = []
         for user, info in users.items():
             value = info.getCardValue()
             if value <= 21 and (value > dealer or dealer > 21):
                 winner.append(user)
         return winner
+
+    async def _call_helper(self, ctx, coro, cancel_message):
+        if self.task.get(ctx.guild.id, None) is None:
+            self.task[ctx.guild.id] = asyncio.create_task(coro(ctx))
+        else:
+            raise commands.MaxConcurrencyReached(1, commands.BucketType.guild)
+        try:
+            await self.task[ctx.guild.id]
+        except asyncio.CancelledError:
+            await ctx.send(cancel_message)
+            pass
+        except:
+            #In case some other errors pop up
+            pass
+        self.task[ctx.guild.id] = None
 
 def setup(bot):
     bot.add_cog(Game(bot))
