@@ -213,7 +213,7 @@ class BlackjackInfo:
                 ace += 1
             else:
                 total += BlackjackInfo.cards[card]
-        if ace > 0:
+        for _ in range(ace):
             if total <= 10:
                 total += 11
             else:
