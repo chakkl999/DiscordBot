@@ -12,6 +12,7 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
         self.bot = bot
         self.pattern = re.compile("(<:.*?:\d+>|:.*?:)")
         self.emotes = ["⏪", "◀", "▶", "⏩"]
+        self.task = None
 
     @commands.command(name="getcogcmd")
     @commands.is_owner()
@@ -46,33 +47,36 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
             await ctx.send(embed=discord.Embed(title="Error", description=str(e)))
 
     @commands.command(name="test")
+    @commands.max_concurrency(number=1, per=commands.BucketType.guild, wait=False)
     @commands.is_owner()
     async def testfunc(self, ctx, *, arg: str):
-        if arg == '1':
-            await asyncio.gather(*[ctx.message.add_reaction(e) for e in self.emotes])
-        else:
-            for e in self.emotes:
-                await ctx.message.add_reaction(e)
-        return
-        await ctx.message.delete()
-        webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")
-        if not webhook:
-            webhook = await ctx.channel.create_webhook(name="Emotes", reason="Automatically created webhook for bot.")
-        start = default_timer()
-        print(arg)
-        arg = self.pattern.split(arg)
-        print(arg)
-        for i in range(len(arg)):
-            if arg[i] and arg[i][0] == ':' and arg[i][-1] == ':':
-                emote = discord.utils.get(self.bot.emojis, name=arg[i][1:-1])
-                if emote:
-                    arg[i] = str(emote)
-        arg = "".join(arg)
-        print(arg)
-        print(default_timer() - start)
-        async with aiohttp.ClientSession() as session:
-            w = Webhook.partial(webhook.id, webhook.token, adapter=AsyncWebhookAdapter(session))
-            await w.send(content=arg, username=ctx.author.display_name, avatar_url=ctx.author.avatar_url)
+        msg = await ctx.send("ass")
+        self.task = asyncio.create_task(self.longfunc(msg))
+        try:
+            if self.task is not None:
+                await self.task
+        except asyncio.CancelledError:
+            await msg.edit(content="cancelled")
+            pass
+        self.task = None
+
+    @commands.command(name="testcancel")
+    @commands.is_owner()
+    async def cancel(self, ctx):
+        if self.task is not None:
+            self.task.cancel()
+        self.task = None
+
+    async def longfunc(self, msg):
+        await asyncio.sleep(5)
+        await msg.edit(content="bitch")
+        await asyncio.sleep(5)
+        await msg.edit(content="cunt")
+        await asyncio.sleep(5)
+        await msg.edit(content="penis")
+        await asyncio.sleep(5)
+        await msg.edit(content="pp")
+
 
 def setup(bot):
     bot.add_cog(Development(bot))

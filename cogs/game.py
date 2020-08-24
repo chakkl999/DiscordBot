@@ -8,14 +8,33 @@ class Game(commands.Cog, name="Game"):
     def __init__(self, bot):
         self.bot = bot
         self.emotes = ["🇭", "🇩" ,"🇸"]
+        self.task = None
 
     @commands.command(name="blackjack", description="Onii-chan, want to play a game of blackjack with me?", usage="blackjack")
-    @commands.max_concurrency(number=1, per=commands.BucketType.guild, wait=False)
     async def blackjack(self, ctx):
         """A game of blackjack.
         When the game starts, users have 15 seconds to react to the message to join the game.
         During the game, each player have 10 seconds to decide on their action (hit, double down, stand).
         """
+        if self.task is None:
+            self.task = asyncio.create_task(self.blackjackhelper(ctx))
+        else:
+            raise commands.MaxConcurrencyReached(1, commands.BucketType.guild)
+        try:
+            await self.task
+        except asyncio.CancelledError:
+            await ctx.send("Blackjack game is cancalled.")
+            pass
+        self.task = None
+
+    @commands.command(name="cancel")
+    @commands.is_owner()
+    async def cancel(self, ctx):
+        if self.task is not None:
+            self.task.cancel()
+        self.task = None
+
+    async def blackjackhelper(self, ctx):
         msg = await ctx.send("```React to this message to join the game of blackjack.```")
         await msg.add_reaction("✅")
 
