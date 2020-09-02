@@ -6,11 +6,11 @@ import random
 
 class Random(commands.Cog, name="Random"):
     """Contains commands that give you random pictures."""
-    def __init__(self, bot, session):
+    def __init__(self, bot):
         self.bot = bot
         self.dog_breed = {}
         self.emotes = ["⏪", "◀", "▶", "⏩"]
-        self.session = session
+        self.session = bot.getSession()
 
     async def get_breed_list(self):
         async with self.session.get(url="https://dog.ceo/api/breeds/list/all") as r:
@@ -102,5 +102,5 @@ class Random(commands.Cog, name="Random"):
             return max_page
         return current
 
-def setup(bot, **kwargs):
-    bot.add_cog(Random(bot, kwargs.get("session")))
+def setup(bot):
+    bot.add_cog(Random(bot))

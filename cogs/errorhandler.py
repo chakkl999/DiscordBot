@@ -4,9 +4,9 @@ import datetime
 from util import customException
 
 class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=True)):
-    def __init__(self, bot, config):
+    def __init__(self, bot):
         self.bot = bot
-        self.config = config
+        self.config = bot.getConfig()
         self.errors = {commands.NotOwner: self.noPermission, commands.MissingPermissions: self.noPermission,
                        commands.errors.CommandOnCooldown: self.cooldown, commands.MissingRequiredArgument: self.missingArg,
                        commands.BadArgument: self.badArg, commands.NSFWChannelRequired: self.nsfw,
@@ -82,5 +82,5 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         await self.bot.get_guild(self.config.errorserver).get_channel(self.config.errorchannel).send(embed=embed)
 
 
-def setup(bot, **kwargs):
-    bot.add_cog(ErrorHandler(bot, kwargs.get("config")))
+def setup(bot):
+    bot.add_cog(ErrorHandler(bot))

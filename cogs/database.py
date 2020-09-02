@@ -57,5 +57,5 @@ class db(commands.Cog, name="Database", command_attrs = dict(hidden=True)):
         self.cursor.close();
         self.conn.close();
 
-def setup(bot, **kwargs):
+def setup(bot):
     bot.add_cog(db(bot))

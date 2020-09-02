@@ -9,11 +9,11 @@ from inspect import Parameter
 
 class Customcmd(commands.Cog, name="Customcmd"):
     """Commands for creating your own custom command."""
-    def __init__(self, bot, session):
+    def __init__(self, bot):
         self.bot = bot
         self.conn = sqlite3.connect("./data/data.db")
         self.cursor = self.conn.cursor()
-        self.session = session
+        self.session = bot.getSession()
 
     @commands.group(name="ccmd", description="Onii-chan can create some custom command for me, but nothing lewd ok? ( ≧Д≦)", usage="ccmd [command name] | [content]", invoke_without_command=True)
     async def ccmd(self, ctx, *, arg: commands.clean_content):
@@ -202,5 +202,5 @@ class Customcmd(commands.Cog, name="Customcmd"):
         self.cursor.close()
         self.conn.close()
 
-def setup(bot, **kwargs):
-    bot.add_cog(Customcmd(bot, kwargs.get("session")))
+def setup(bot):
+    bot.add_cog(Customcmd(bot))

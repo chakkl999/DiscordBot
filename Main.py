@@ -5,74 +5,23 @@ import pathlib
 from util.config import Config
 import aiohttp
 import asyncio
-import importlib
-from discord import errors
-import sys
 
 class CustomBot(commands.Bot):
 
-    def _load_from_module_spec(self, spec, key, **kwargs):
-        lib = importlib.util.module_from_spec(spec)
-        sys.modules[key] = lib
-        try:
-            spec.loader.exec_module(lib)
-        except Exception as e:
-            del sys.modules[key]
-            raise errors.ExtensionFailed(key, e) from e
+    def __init__(self, config, session, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.config = config
+        self.session = session
 
-        try:
-            setup = getattr(lib, 'setup')
-        except AttributeError:
-            del sys.modules[key]
-            raise errors.NoEntryPointError(key)
+    async def logout(self):
+        await self.session.close()
+        await super().close()
 
-        try:
-            setup(self, **kwargs)
-        except Exception as e:
-            del sys.modules[key]
-            self._remove_module_references(lib.__name__)
-            self._call_module_finalizers(lib, key)
-            raise errors.ExtensionFailed(key, e) from e
-        else:
-            self._BotBase__extensions[key] = lib
+    def getSession(self):
+        return self.session
 
-    def load_extension(self, name, **kwargs):
-        if name in self._BotBase__extensions:
-            raise errors.ExtensionAlreadyLoaded(name)
-
-        spec = importlib.util.find_spec(name)
-        if spec is None:
-            raise errors.ExtensionNotFound(name)
-
-        self._load_from_module_spec(spec, name, **kwargs)
-
-    def reload_extension(self, name, **kwargs):
-        lib = self._BotBase__extensions.get(name)
-        if lib is None:
-            raise errors.ExtensionNotLoaded(name)
-
-        # get the previous module states from sys modules
-        modules = {
-            name: module
-            for name, module in sys.modules.items()
-            if commands.bot._is_submodule(lib.__name__, name)
-        }
-
-        try:
-            # Unload and then load the module...
-            self._remove_module_references(lib.__name__)
-            self._call_module_finalizers(lib, name)
-            self.load_extension(name, **kwargs)
-        except Exception as e:
-            # if the load failed, the remnants should have been
-            # cleaned from the load_extension function call
-            # so let's load it from our old compiled library.
-            lib.setup(self)
-            self._BotBase__extensions[name] = lib
-
-            # revert sys.modules back to normal and raise back to caller
-            sys.modules.update(modules)
-            raise
+    def getConfig(self):
+        return self.config
 
 async def get_prefix(bot, message):
     current_prefix = cur.execute("SELECT prefix FROM prefixes WHERE server = ?", (message.guild.id,)).fetchone()
@@ -115,7 +64,7 @@ default_prefix = config.prefix
 if default_prefix[-1].isalnum():
     default_prefix += " "
 
-bot = CustomBot(command_prefix=get_prefix, description="Just a cute loli.")
+bot = CustomBot(config, session, command_prefix=get_prefix, description="Just a cute loli.")
 bot.remove_command('help')
 bot.owner_id = int(config.ownerid)
 
@@ -138,7 +87,7 @@ async def on_message(message):
 async def load(ctx, cog: str):
     cog = cog.lower()
     try:
-        bot.load_extension(f"cogs.{cog}", config=config, session=session)
+        bot.load_extension(f"cogs.{cog}")
         embed = discord.Embed(title='Success', description=f'{cog} is loaded')
         await ctx.send(embed=embed)
     except Exception as e:
@@ -163,7 +112,7 @@ async def unload(ctx, cog: str):
 async def reload(ctx, cog):
     if ctx.invoked_subcommand is None:
         try:
-            bot.reload_extension(f"cogs.{cog}", config=config, session=session)
+            bot.reload_extension(f"cogs.{cog}")
             embed = discord.Embed(title='Success', description=f'{cog} is reloaded')
         except Exception as e:
             embed = discord.Embed(title='Exception', description=f'{cog} cannot be reloaded.')
@@ -176,7 +125,7 @@ async def reload_all(ctx):
     fail = {}
     for file in pathlib.Path("cogs").glob("*.py"):
         try:
-            bot.reload_extension(f"cogs.{file.name[:-3]}", config=config, session=session)
+            bot.reload_extension(f"cogs.{file.name[:-3]}")
         except Exception as e:
             fail[file.name[:-3]] = str(e)
     embed = discord.Embed(title="Success", description=f"All cogs have been reloaded." if not fail else "All cogs have been reloaded except")
@@ -187,13 +136,12 @@ async def reload_all(ctx):
 @bot.command(name="exit", description="Exit the bot")
 @commands.is_owner()
 async def quiting(ctx):
-    await session.close()
     await ctx.send("Shutting down.....")
     await bot.logout()
 
 for file in pathlib.Path("cogs").glob("*.py"):
     try:
-        bot.load_extension(f"cogs.{file.name[:-3]}", config=config, session=session)
+        bot.load_extension(f"cogs.{file.name[:-3]}")
     except Exception as e:
         print(f'{file.name[:-3]} cannot be loaded. Error:{e}')
 try:

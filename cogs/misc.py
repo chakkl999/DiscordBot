@@ -9,12 +9,12 @@ import re
 
 class Misc(commands.Cog, name="Misc"):
     """All your miscellaneous commands."""
-    def __init__(self, bot, session):
+    def __init__(self, bot):
         self.bot = bot
         self.searchPattern = re.compile("(<:.*?:\d+>|:.*?:)")
         self.matchPattern = re.compile("^(<:.*?:\d+>|:.*?:|[^a-zA-Z0-9:<\-/])$")
         self.eightballAnswer = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."]
-        self.session = session
+        self.session = bot.getSession()
         try:
             self.font = ImageFont.truetype("./image/font.ttf", 20)
             self.source = Image.open("./image/og.png").convert("RGBA")
@@ -155,5 +155,5 @@ class Misc(commands.Cog, name="Misc"):
             raise commands.BadArgument(f"Emote argument not an emote {str(emote)}")
         return emote
 
-def setup(bot, **kwargs):
-    bot.add_cog(Misc(bot, kwargs.get("session")))
+def setup(bot):
+    bot.add_cog(Misc(bot))

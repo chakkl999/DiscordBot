@@ -7,10 +7,10 @@ from django.core.paginator import Paginator
 
 class Search(commands.Cog, name="Search"):
     """Commands relating to searching for things."""
-    def __init__(self, bot, session):
+    def __init__(self, bot):
         self.bot = bot
         self.emotes = ["⏪", "◀", "▶", "⏩"]
-        self.session = session
+        self.session = bot.getSession()
 
     @commands.command(name="yt", description="I can search whatever onii-chan wants on youtube. Onii-chan, don't search for any lewd things, ok?（＞д＜）", usage="yt [things to search]")
     async def yt(self, ctx, *, arg):
@@ -248,5 +248,5 @@ class Search(commands.Cog, name="Search"):
             current = current + 1
         return current, temp
 
-def setup(bot, **kwargs):
-    bot.add_cog(Search(bot, kwargs.get("session")))
+def setup(bot):
+    bot.add_cog(Search(bot))

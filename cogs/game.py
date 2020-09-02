@@ -197,7 +197,7 @@ class Game(commands.Cog, name="Game"):
             pass
         self.task[ctx.guild.id] = None
 
-def setup(bot, **kwargs):
+def setup(bot):
     bot.add_cog(Game(bot))
 
 class BlackjackInfo:

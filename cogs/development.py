@@ -78,5 +78,5 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
         await msg.edit(content="pp")
 
 
-def setup(bot, **kwargs):
+def setup(bot):
     bot.add_cog(Development(bot))
