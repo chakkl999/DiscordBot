@@ -35,9 +35,6 @@ async def getSession():
     session = aiohttp.ClientSession()
     return session
 
-loop = asyncio.get_event_loop()
-session = loop.run_until_complete(getSession())
-
 pathlib.Path("./data").mkdir(parents=True, exist_ok=True)
 pathlib.Path("./data/data.db").touch(exist_ok=True)
 
@@ -63,6 +60,9 @@ TOKEN = config.token
 default_prefix = config.prefix
 if default_prefix[-1].isalnum():
     default_prefix += " "
+
+loop = asyncio.get_event_loop()
+session = loop.run_until_complete(getSession())
 
 bot = CustomBot(config, session, command_prefix=get_prefix, description="Just a cute loli.")
 bot.remove_command('help')
