@@ -1,26 +1,24 @@
 import discord
 from discord.ext import commands
 import asyncio
-import aiohttp
 import typing
 from bs4 import BeautifulSoup
 from django.core.paginator import Paginator
 
 class Search(commands.Cog, name="Search"):
     """Commands relating to searching for things."""
-    def __init__(self, bot):
+    def __init__(self, bot, session):
         self.bot = bot
         self.emotes = ["⏪", "◀", "▶", "⏩"]
+        self.session = session
 
     @commands.command(name="yt", description="I can search whatever onii-chan wants on youtube. Onii-chan, don't search for any lewd things, ok?（＞д＜）", usage="yt [things to search]")
     async def yt(self, ctx, *, arg):
         """Searches things on youtube. It'll return the first page of videos and channels(apparently). Limit to 10 videos/channel. I might include an optional limit later but idk."""
         await ctx.send("Searching for ***" + arg + "***.......")
         vids = []
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url="https://www.youtube.com/results?search_query=" + arg) as r:
-                data = await r.text()
-        await session.close()
+        async with self.session.get(url="https://www.youtube.com/results?search_query=" + arg) as r:
+            data = await r.text()
         soup = BeautifulSoup(data, "html.parser")
         for vid in soup.find_all(attrs={"class":"yt-uix-tile-link"}):
             vids.append("https://www.youtube.com"+vid["href"])
@@ -55,11 +53,10 @@ class Search(commands.Cog, name="Search"):
         for a in arg:
             a.strip()
         arg = " | ".join(arg)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url='https://azurlane.koumakan.jp/w/api.php?action=query&format=json&list=search&srlimit=20', params={
-                'srsearch': arg
-            }) as r:
-                data = await r.json()
+        async with self.session.get(url='https://azurlane.koumakan.jp/w/api.php?action=query&format=json&list=search&srlimit=20', params={
+            'srsearch': arg
+        }) as r:
+            data = await r.json()
         titles = []
         for title in data['query']['search']:
             if title["snippet"].startswith("#REDIRECT") or not title['snippet']:
@@ -68,7 +65,6 @@ class Search(commands.Cog, name="Search"):
                 titles.append(title['title'])
         if not titles:
             await ctx.send("Sorry onii-chan, I can't find anything.")
-            await session.close()
             return
         embed = discord.Embed(title="Results:", color=discord.Color.green())
         for x in titles:
@@ -84,12 +80,10 @@ class Search(commands.Cog, name="Search"):
             arg[i] = arg[i][:1].upper() + arg[i][1:]
             arg[i] = f"File:{arg[i].strip()}.png"
         arg = "|".join(arg)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url='https://azurlane.koumakan.jp/w/api.php?action=query&format=json&prop=imageinfo&iiprop=url', params={
-                "titles": arg
-            }) as r:
-                data = await r.json()
-        await session.close()
+        async with self.session.get(url='https://azurlane.koumakan.jp/w/api.php?action=query&format=json&prop=imageinfo&iiprop=url', params={
+            "titles": arg
+        }) as r:
+            data = await r.json()
         data = data["query"]["pages"]
         results = []
         for page in data:
@@ -137,12 +131,10 @@ class Search(commands.Cog, name="Search"):
         This returns a maximum of 100 results.
         Only .png file will be returned."""
         arg = arg.strip()
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url='https://azurlane.koumakan.jp/w/api.php?action=opensearch&format=json&namespace=6&limit=100&redirects=resolve', params={
-                "search": arg
-            }) as r:
-                data = await r.json()
-        await session.close()
+        async with self.session.get(url='https://azurlane.koumakan.jp/w/api.php?action=opensearch&format=json&namespace=6&limit=100&redirects=resolve', params={
+            "search": arg
+        }) as r:
+            data = await r.json()
         if not data[1]:
             await ctx.send("Sorry onii-chan, I can't find anything.")
             return
@@ -186,12 +178,10 @@ class Search(commands.Cog, name="Search"):
             await ctx.send("Onii-chan, enter a number that I can work with.")
             return
         arg = " ".join([tag.strip().replace(" ", "_") for tag in list(filter(None, (" ".join(arg.split())).split("|")))])
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url="https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1", params={
-                "tags": arg
-            }) as r:
-                data = await r.json()
-        await session.close()
+        async with self.session.get(url="https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1", params={
+            "tags": arg
+        }) as r:
+            data = await r.json()
         if not data:
             await ctx.send("Sorry onii-chan, I can't find anything. .( ̵˃﹏˂̵ )")
             return
@@ -258,5 +248,5 @@ class Search(commands.Cog, name="Search"):
             current = current + 1
         return current, temp
 
-def setup(bot):
-    bot.add_cog(Search(bot))
+def setup(bot, **kwargs):
+    bot.add_cog(Search(bot, kwargs.get("session")))

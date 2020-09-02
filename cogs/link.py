@@ -284,5 +284,5 @@ class Link(commands.Cog, name="Link", command_attrs=dict(hidden=True)):
             data[i] = data[i][0]
         return data
 
-def setup(bot):
+def setup(bot, **kwargs):
     bot.add_cog(Link(bot))

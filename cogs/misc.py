@@ -1,21 +1,20 @@
 import discord
 from discord.ext import commands
 from discord import Webhook, AsyncWebhookAdapter
-import typing
 from PIL import Image, ImageFont, ImageDraw
 import io
 import textwrap
 import random
 import re
-import aiohttp
 
 class Misc(commands.Cog, name="Misc"):
     """All your miscellaneous commands."""
-    def __init__(self, bot):
+    def __init__(self, bot, session):
         self.bot = bot
         self.searchPattern = re.compile("(<:.*?:\d+>|:.*?:)")
-        self.matchPattern = re.compile("^(<:.*?:\d+>|:.*?:|[^a-zA-Z0-9:<\-])$")
+        self.matchPattern = re.compile("^(<:.*?:\d+>|:.*?:|[^a-zA-Z0-9:<\-/])$")
         self.eightballAnswer = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."]
+        self.session = session
         try:
             self.font = ImageFont.truetype("./image/font.ttf", 20)
             self.source = Image.open("./image/og.png").convert("RGBA")
@@ -117,9 +116,8 @@ class Misc(commands.Cog, name="Misc"):
                 if emote:
                     arg[i] = str(emote)
         arg = "".join(arg)
-        async with aiohttp.ClientSession() as session:
-            w = Webhook.partial(webhook.id, webhook.token, adapter=AsyncWebhookAdapter(session))
-            await w.send(content=arg, username=ctx.author.display_name, avatar_url=ctx.author.avatar_url)
+        w = Webhook.partial(webhook.id, webhook.token, adapter=AsyncWebhookAdapter(self.session))
+        await w.send(content=arg, username=ctx.author.display_name, avatar_url=ctx.author.avatar_url)
 
     def text_wrap(self, text, maxwidth):
         text_arr = text.split()
@@ -157,5 +155,5 @@ class Misc(commands.Cog, name="Misc"):
             raise commands.BadArgument(f"Emote argument not an emote {str(emote)}")
         return emote
 
-def setup(bot):
-    bot.add_cog(Misc(bot))
+def setup(bot, **kwargs):
+    bot.add_cog(Misc(bot, kwargs.get("session")))

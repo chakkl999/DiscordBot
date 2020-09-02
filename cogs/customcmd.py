@@ -3,17 +3,17 @@ from discord.ext import commands
 import sqlite3
 from django.core.paginator import Paginator
 import asyncio
-import aiohttp
 from io import BytesIO
 import imghdr
 from inspect import Parameter
 
 class Customcmd(commands.Cog, name="Customcmd"):
     """Commands for creating your own custom command."""
-    def __init__(self, bot):
+    def __init__(self, bot, session):
         self.bot = bot
         self.conn = sqlite3.connect("./data/data.db")
         self.cursor = self.conn.cursor()
+        self.session = session
 
     @commands.group(name="ccmd", description="Onii-chan can create some custom command for me, but nothing lewd ok? ( ≧Д≦)", usage="ccmd [command name] | [content]", invoke_without_command=True)
     async def ccmd(self, ctx, *, arg: commands.clean_content):
@@ -164,27 +164,24 @@ class Customcmd(commands.Cog, name="Customcmd"):
         if isinstance(error, commands.CommandNotFound):
             response = self.cursor.execute("SELECT response FROM custom_cmd WHERE server = ? AND cmd = ?", (ctx.guild.id, ctx.message.content[len(ctx.prefix):])).fetchone()
             if response:
+                data = None
                 if response[0].startswith("http"): #if response starts with http, it will treat it as an image and do a request
-                    async with aiohttp.ClientSession() as session:
-                        try:
-                            async with session.get(response[0]) as r:
-                                if r.status == 200:
-                                    data = await r.read()
-                                else:
-                                    data = None
-                        except:
-                            data = None
-                    await session.close()
-                    if data: #if request is successful
-                        try:
-                            with BytesIO(data) as b:
-                                ext = imghdr.what(None, h=b)
-                                if not ext: #if it can't find the extension of the image, send it as a link
-                                    await ctx.send(response[0])
-                                else: #otherwise, send the image
-                                    await ctx.send(file=discord.File(fp=b, filename=f"{ctx.message.content[len(ctx.prefix):]}.{ext}")) #the image name will be the name of the custom cmd regardless of the original name
-                        except: #if it fails to send the image, send it as a regular link
-                            await ctx.send(response[0])
+                    try:
+                        async with self.session.get(response[0]) as r:
+                            if r.status == 200:
+                                data = await r.read()
+                    except:
+                        pass
+                if data: #if request is successful
+                    try:
+                        with BytesIO(data) as b:
+                            ext = imghdr.what(None, h=b)
+                            if not ext: #if it can't find the extension of the image, send it as a link
+                                await ctx.send(response[0])
+                            else: #otherwise, send the image
+                                await ctx.send(file=discord.File(fp=b, filename=f"{ctx.message.content[len(ctx.prefix):]}.{ext}")) #the image name will be the name of the custom cmd regardless of the original name
+                    except: #if it fails to send the image, send it as a regular link
+                        await ctx.send(response[0])
                 else: #if the response isn't a link, send it as a regular message
                     await ctx.send(response[0])
             else: #if the custom cmd doesn't exist in the database
@@ -201,9 +198,9 @@ class Customcmd(commands.Cog, name="Customcmd"):
         return [x.strip() for x in arg]
 
     def cog_unload(self):
-        self.conn.commit();
-        self.cursor.close();
-        self.conn.close();
+        self.conn.commit()
+        self.cursor.close()
+        self.conn.close()
 
-def setup(bot):
-    bot.add_cog(Customcmd(bot))
+def setup(bot, **kwargs):
+    bot.add_cog(Customcmd(bot, kwargs.get("session")))

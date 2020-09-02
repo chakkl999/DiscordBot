@@ -196,5 +196,5 @@ class Essential(commands.Cog, name="Essential"):
         self.cursor.close();
         self.conn.close();
 
-def setup(bot):
+def setup(bot, **kwargs):
     bot.add_cog(Essential(bot))

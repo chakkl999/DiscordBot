@@ -192,13 +192,12 @@ class Game(commands.Cog, name="Game"):
             await self.task[ctx.guild.id]
         except asyncio.CancelledError:
             await ctx.send(cancel_message)
-            pass
         except:
-            #In case some other errors pop up
+            # In case some other errors pop up
             pass
         self.task[ctx.guild.id] = None
 
-def setup(bot):
+def setup(bot, **kwargs):
     bot.add_cog(Game(bot))
 
 class BlackjackInfo:

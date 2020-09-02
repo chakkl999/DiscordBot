@@ -45,5 +45,5 @@ class Degen(commands.Cog, name="Degen"):
             embed.add_field(name="I'm too lazy", value="To get an image specifically for this.")
         await ctx.send(embed=embed)
 
-def setup(bot):
+def setup(bot, **kwargs):
     bot.add_cog(Degen(bot))

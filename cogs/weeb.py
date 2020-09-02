@@ -39,5 +39,5 @@ class Weeb(commands.Cog, name="Weeb"):
         embed.set_image(url=await link.get_random("CHINO"))
         await ctx.send(embed=embed)
 
-def setup(bot):
+def setup(bot, **kwargs):
     bot.add_cog(Weeb(bot))

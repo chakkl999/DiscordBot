@@ -2,21 +2,19 @@ import discord
 from discord.ext import commands
 from django.core.paginator import Paginator
 import asyncio
-import aiohttp
 import random
 
 class Random(commands.Cog, name="Random"):
     """Contains commands that give you random pictures."""
-    def __init__(self, bot):
+    def __init__(self, bot, session):
         self.bot = bot
         self.dog_breed = {}
         self.emotes = ["⏪", "◀", "▶", "⏩"]
+        self.session = session
 
     async def get_breed_list(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url="https://dog.ceo/api/breeds/list/all") as r:
-                data = await r.json()
-        await session.close()
+        async with self.session.get(url="https://dog.ceo/api/breeds/list/all") as r:
+            data = await r.json()
         dog_breed_list = data["message"]
         for breed in dog_breed_list:
             self.dog_breed[breed] = breed
@@ -57,18 +55,15 @@ class Random(commands.Cog, name="Random"):
         if not self.dog_breed:
             await self.get_breed_list()
         if not breed:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url="https://dog.ceo/api/breeds/image/random") as r:
-                    data = await r.json()
+            async with self.session.get(url="https://dog.ceo/api/breeds/image/random") as r:
+                data = await r.json()
         else:
             breed = breed.lower()
             if breed not in self.dog_breed:
                 await ctx.send(f"Onii-chan, I can't find {breed}.")
                 return
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url=f'https://dog.ceo/api/breed/{self.dog_breed[breed]}/images/random') as r:
-                    data = await r.json()
-        await session.close()
+            async with self.session.get(url=f'https://dog.ceo/api/breed/{self.dog_breed[breed]}/images/random') as r:
+                data = await r.json()
         if data["status"] != "success":
             await ctx.send("Sorry something is wrong, no dogs :(")
             return
@@ -79,10 +74,8 @@ class Random(commands.Cog, name="Random"):
     @commands.command(name="birb", description="Onii-chan, this birb is cute.", usage="birb")
     async def birb(self, ctx):
         """birb"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url="http://random.birb.pw/tweet.json/") as r:
-                data = await r.json()
-        await session.close()
+        async with self.session.get(url="http://random.birb.pw/tweet.json/") as r:
+            data = await r.json()
         embed = discord.Embed(color=int("%06x" % random.randint(0, 0xffffff), 16))
         embed.set_image(url="https://random.birb.pw/img/" + data["file"])
         await ctx.send(embed=embed)
@@ -90,10 +83,8 @@ class Random(commands.Cog, name="Random"):
     @commands.command(name="cat", description="Onii-chan, this cat is really cute.", usage="cat")
     async def cat(self, ctx):
         """Cute cats."""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url='http://aws.random.cat/meow') as r:
-                data = await r.json()
-        await session.close()
+        async with self.session.get(url='http://aws.random.cat/meow') as r:
+            data = await r.json()
         embed = discord.Embed(color=int("%06x" % random.randint(0, 0xffffff), 16))
         embed.set_image(url=data["file"])
         await ctx.send(embed=embed)
@@ -111,5 +102,5 @@ class Random(commands.Cog, name="Random"):
             return max_page
         return current
 
-def setup(bot):
-    bot.add_cog(Random(bot))
+def setup(bot, **kwargs):
+    bot.add_cog(Random(bot, kwargs.get("session")))

@@ -4,8 +4,9 @@ import datetime
 from util import customException
 
 class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=True)):
-    def __init__(self, bot):
+    def __init__(self, bot, config):
         self.bot = bot
+        self.config = config
         self.errors = {commands.NotOwner: self.noPermission, commands.MissingPermissions: self.noPermission,
                        commands.errors.CommandOnCooldown: self.cooldown, commands.MissingRequiredArgument: self.missingArg,
                        commands.BadArgument: self.badArg, commands.NSFWChannelRequired: self.nsfw,
@@ -78,8 +79,8 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         embed.add_field(name=f"Command: {ctx.command.name}", value=f"Message: {ctx.message.content if len(ctx.message.content) <= 1024 else 'Too long, Abbreviated: ' + ctx.message.content[0:500]}...", inline=False)
         embed.add_field(name="Error:", value=repr(error), inline=False)
         embed.set_footer(text=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        await self.bot.get_guild(414125981087825920).get_channel(632118836057079808).send(embed=embed)
+        await self.bot.get_guild(self.config.errorserver).get_channel(self.config.errorchannel).send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(ErrorHandler(bot))
+def setup(bot, **kwargs):
+    bot.add_cog(ErrorHandler(bot, kwargs.get("config")))
