@@ -7,6 +7,7 @@ class db(commands.Cog, name="Database", command_attrs = dict(hidden=True)):
         self.bot = bot
         self.conn = sqlite3.connect("./data/data.db")
         self.cursor = self.conn.cursor()
+        self.config = bot.getConfig()
 
     @commands.command(name="exec")
     @commands.is_owner()
@@ -38,7 +39,7 @@ class db(commands.Cog, name="Database", command_attrs = dict(hidden=True)):
             await message.add_reaction(emotes[i])
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.generic_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()

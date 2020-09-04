@@ -14,6 +14,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
         self.conn = sqlite3.connect("./data/data.db")
         self.cursor = self.conn.cursor()
         self.session = bot.getSession()
+        self.config = self.bot.getConfig()
 
     @commands.group(name="ccmd", description="Onii-chan can create some custom command for me, but nothing lewd ok? ( ≧Д≦)", usage="ccmd [command name] | [content]", invoke_without_command=True)
     async def ccmd(self, ctx, *, arg: commands.clean_content):
@@ -100,7 +101,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
                 return message.author == ctx.message.author
             try:
                 await ctx.send("Onii-chan, who do you want to give the command to?")
-                message = await self.bot.wait_for('message', timeout=15.0, check=check)
+                message = await self.bot.wait_for('message', timeout=self.config.customcmd_timeout, check=check)
                 try:
                     owner = await commands.MemberConverter().convert(ctx, message.content)
                     if owner.id == int(user[0]):
@@ -143,7 +144,7 @@ class Customcmd(commands.Cog, name="Customcmd"):
             await message.add_reaction(emote)
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=15.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.customcmd_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()

@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 import asyncio
 import typing
-from bs4 import BeautifulSoup
 from django.core.paginator import Paginator
+import json
 
 class Search(commands.Cog, name="Search"):
     """Commands relating to searching for things."""
@@ -11,23 +11,29 @@ class Search(commands.Cog, name="Search"):
         self.bot = bot
         self.emotes = ["⏪", "◀", "▶", "⏩"]
         self.session = bot.getSession()
+        self.config = bot.getConfig()
+        self.baseURL = "https://www.youtube.com/watch?v="
 
     @commands.command(name="yt", description="I can search whatever onii-chan wants on youtube. Onii-chan, don't search for any lewd things, ok?（＞д＜）", usage="yt [things to search]")
     async def yt(self, ctx, *, arg):
+        # Credit to https://github.com/joetats/youtube_search for the parsing of the html
         """Searches things on youtube. It'll return the first page of videos and channels(apparently). Limit to 10 videos/channel. I might include an optional limit later but idk."""
         await ctx.send("Searching for ***" + arg + "***.......")
         vids = []
         async with self.session.get(url="https://www.youtube.com/results?search_query=" + arg) as r:
             data = await r.text()
-        soup = BeautifulSoup(data, "html.parser")
-        for vid in soup.find_all(attrs={"class":"yt-uix-tile-link"}):
-            vids.append("https://www.youtube.com"+vid["href"])
-            if len(vids) == 10:
-                break
+        startIndex = (data.index('window["ytInitialData"]') + len('window["ytInitialData"]') + 3)
+        endIndex = data.index("};", startIndex) + 1
+        response = json.loads(data[startIndex:endIndex])["contents"]["twoColumnSearchResultsRenderer"]["primaryContents"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"]
+        for vid in response:
+            if "videoRenderer" in vid:
+                id = vid.get("videoRenderer", {}).get("videoId", None)
+                if id:
+                    vids.append(id)
         if not vids:
             await ctx.send("Sorry onii-chan, I can't find any video.（>﹏<）")
             return
-        message = await ctx.send(vids[0] + f"\nPage: {1}/{len(vids)}")
+        message = await ctx.send(f"{self.baseURL}{vids[0]}\nPage: {1}/{len(vids)}")
         currentIndex = 0
         for i in range(len(self.emotes)):
             await message.add_reaction(self.emotes[i])
@@ -35,14 +41,14 @@ class Search(commands.Cog, name="Search"):
             return user == ctx.message.author and str(reaction) in self.emotes and reaction.message.id == message.id
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.search_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
                 break
             else:
                 currentIndex, test = self.getNextPage(str(reaction), currentIndex, len(vids))
-                await message.edit(content=vids[currentIndex]+f"\nPage: {currentIndex+1}/{len(vids)}")
+                await message.edit(content=f"{self.baseURL}{vids[currentIndex]}\nPage: {currentIndex+1}/{len(vids)}")
 
     @commands.command(name="als", description="I can search things up on the azur lane wiki for onii-chan.", usage="als [things to search]")
     async def als(self, ctx, *, arg: str):
@@ -112,7 +118,7 @@ class Search(commands.Cog, name="Search"):
             return user == ctx.message.author and str(reaction) in self.emotes and reaction.message.id == message.id
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.search_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
@@ -156,7 +162,7 @@ class Search(commands.Cog, name="Search"):
             await message.add_reaction(emote)
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=15.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.search_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
@@ -214,7 +220,7 @@ class Search(commands.Cog, name="Search"):
 
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.search_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()

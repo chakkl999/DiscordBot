@@ -11,6 +11,7 @@ class Random(commands.Cog, name="Random"):
         self.dog_breed = {}
         self.emotes = ["⏪", "◀", "▶", "⏩"]
         self.session = bot.getSession()
+        self.config = bot.getConfig()
 
     async def get_breed_list(self):
         async with self.session.get(url="https://dog.ceo/api/breeds/list/all") as r:
@@ -38,7 +39,7 @@ class Random(commands.Cog, name="Random"):
             return user == ctx.message.author and str(reaction) in self.emotes and reaction.message.id == message.id
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=15.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.random_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()

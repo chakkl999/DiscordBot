@@ -9,6 +9,7 @@ class Game(commands.Cog, name="Game"):
         self.bot = bot
         self.emotes = ["🇭", "🇩" ,"🇸"]
         self.task = {}
+        self.config = bot.getConfig()
 
     @commands.command(name="blackjack", description="Onii-chan, want to play a game of blackjack with me?", usage="blackjack")
     async def blackjack(self, ctx):
@@ -29,7 +30,7 @@ class Game(commands.Cog, name="Game"):
         msg = await ctx.send("```React to this message to join the game of blackjack.```")
         await msg.add_reaction("✅")
 
-        await asyncio.sleep(15)
+        await asyncio.sleep(self.config.gameReady_timeout)
 
         msg = await ctx.fetch_message(msg.id)
         users_list = await self._get_reaction_user(msg).users().flatten()
@@ -82,7 +83,7 @@ class Game(commands.Cog, name="Game"):
 
             while True:
                 try:
-                    reaction, user = await self.bot.wait_for('reaction_add', timeout=10, check=check)
+                    reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.gameRound_timeout, check=check)
                 except asyncio.TimeoutError:
                     reaction = "🇸"
                     user = list(users)[turn]

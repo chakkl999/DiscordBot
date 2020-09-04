@@ -19,6 +19,7 @@ class Essential(commands.Cog, name="Essential"):
         self.emotes = ["0⃣", "1⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", '🗑']
         self.conn = sqlite3.connect("./data/data.db")
         self.cursor = self.conn.cursor()
+        self.config = bot.getConfig()
 
     async def mainMenu(self, ctx):
         prefix = await ctx.bot.get_prefix(ctx.message)
@@ -69,7 +70,7 @@ class Essential(commands.Cog, name="Essential"):
 
             while True:
                 try:
-                    reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+                    reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.essential_timeout, check=check)
                     await msg.remove_reaction(reaction, user)
                 except asyncio.TimeoutError:
                     await msg.clear_reactions()
@@ -122,7 +123,7 @@ class Essential(commands.Cog, name="Essential"):
 
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.essential_timeout, check=check)
             except asyncio.TimeoutError:
                 break
             else:

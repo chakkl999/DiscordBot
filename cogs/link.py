@@ -11,6 +11,7 @@ class Link(commands.Cog, name="Link", command_attrs=dict(hidden=True)):
         self.bot = bot
         self.conn = sqlite3.connect("./data/data.db")
         self.cursor = self.conn.cursor()
+        self.config = bot.getConfig()
 
     @commands.command(name="addlink", description="Add links to file.")
     @commands.is_owner()
@@ -44,7 +45,7 @@ class Link(commands.Cog, name="Link", command_attrs=dict(hidden=True)):
             await message.add_reaction(emotes[2])
             await message.add_reaction(emotes[3])
             try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=15.0, check=check)
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=self.config.link_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
@@ -77,7 +78,7 @@ class Link(commands.Cog, name="Link", command_attrs=dict(hidden=True)):
             await message.add_reaction(emotes[i])
         while True:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=15.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.link_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
