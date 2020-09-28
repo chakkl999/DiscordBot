@@ -6,6 +6,7 @@ from discord import Webhook, AsyncWebhookAdapter
 import aiohttp
 import re
 from timeit import default_timer
+from inspect import getsource
 
 class Development(commands.Cog, name="Development", command_attrs = dict(hidden=True)):
     def __init__(self, bot):
@@ -13,6 +14,7 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
         self.pattern = re.compile("(<:.*?:\d+>|:.*?:)")
         self.emotes = ["⏪", "◀", "▶", "⏩"]
         self.task = None
+        self.config = bot.getConfig()
 
     @commands.command(name="getcogcmd")
     @commands.is_owner()
@@ -46,10 +48,60 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
         except Exception as e:
             await ctx.send(embed=discord.Embed(title="Error", description=str(e)))
 
+    @commands.command(name="getcommdef")
+    @commands.is_owner()
+    async def getcommdef(self, ctx, comm: str = None):
+        if not comm:
+            comm = "getcommdef"
+        comm = self.bot.get_command(comm)
+        if not comm:
+            await ctx.send("Command not found.")
+            return
+        i = getsource(comm.callback).split("\n")
+        line = ""
+        pages = []
+        backticks = re.compile("```")
+        for sentence in i:
+            if len(line) + len(sentence) >= 1990:
+                pages.append(line)
+                line = ""
+            line += backticks.sub("'''", sentence) + "\n"
+        if line:
+           pages.append(line)
+
+        if len(pages) == 1:
+            await ctx.send(f"```py\n{pages[0]}```")
+            return
+
+        def check(reaction, user):
+            return user == ctx.message.author and str(reaction) in emotes and reaction.message.id == message.id
+
+        currentIndex = 0
+        emotes = ["◀", "▶"]
+        message = await ctx.send(f"```py\n{pages[0]}```")
+        for i in range(len(emotes)):
+            await message.add_reaction(emotes[i])
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.generic_timeout, check=check)
+                await message.remove_reaction(reaction, user)
+            except asyncio.TimeoutError:
+                await message.clear_reactions()
+                break
+            else:
+                index = emotes.index(str(reaction))
+                if index == 0:
+                    currentIndex = (currentIndex-1) % len(pages)
+                elif index == 1:
+                    currentIndex = (currentIndex+1) % len(pages)
+                await message.edit(content=f"```py\n{pages[currentIndex]}```")
+
     @commands.command(name="test")
     @commands.max_concurrency(number=1, per=commands.BucketType.guild, wait=False)
     @commands.is_owner()
     async def testfunc(self, ctx, *, arg: str):
+        await self.bot.get_command("reload all")(ctx)
+        return
         msg = await ctx.send("ass")
         self.task = asyncio.create_task(self.longfunc(msg))
         try:

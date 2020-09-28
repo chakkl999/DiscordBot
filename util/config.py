@@ -6,7 +6,8 @@ class Config:
         self.file = filename
         self.token = None
         self.prefix = None
-        self.ownerid = None
+        self.invite_link = None
+        self.owner_id = None
         self.errorserver = None
         self.errorchannel = None
         self.customcmd_timeout = 0
@@ -24,9 +25,10 @@ class Config:
             self.config.read(self.file)
             self.token = self.config["Login"]["Token"]
             self.prefix = self.config["DEFAULT"]["Prefix"]
-            self.ownerid = self.config["ErrorHandler"]["OwnerID"]
-            self.errorserver = self.config["ErrorHandler"]["ServerID"]
-            self.errorchannel = self.config["ErrorHandler"]["ChannelID"]
+            self.invite_link = self.config["DEFAULT"]["Invite"]
+            self.owner_id = self.config["ErrorHandler"].getint("OwnerID")
+            self.errorserver = self.config["ErrorHandler"].getint("ServerID")
+            self.errorchannel = self.config["ErrorHandler"].getint("ChannelID")
             self.customcmd_timeout = self.config["Timeout"].getint("Customcmd")
             self.essential_timeout = self.config["Timeout"].getint("Essential")
             self.gameReady_timeout = self.config["Timeout"].getint("GameReady")

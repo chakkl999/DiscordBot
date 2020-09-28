@@ -11,8 +11,8 @@ class Misc(commands.Cog, name="Misc"):
     """All your miscellaneous commands."""
     def __init__(self, bot):
         self.bot = bot
-        self.searchPattern = re.compile("(<:.*?:\d+>|:.*?:)")
-        self.matchPattern = re.compile("^(<:.*?:\d+>|:.*?:|[^a-zA-Z0-9:<\-/])$")
+        self.splitEmote = re.compile("(<:.*?:\d+>|:.*?:)")
+        self.matchEmote = re.compile("^(<:.*?:\d+>|:.*?:|[^a-zA-Z0-9:<\-/])$")
         self.eightballAnswer = ["It is certain.", "It is decidedly so.", "Without a doubt.", "Yes - definitely.", "You may rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.", "Reply hazy, try again.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.", "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."]
         self.session = bot.getSession()
         try:
@@ -109,7 +109,7 @@ class Misc(commands.Cog, name="Misc"):
         webhook = discord.utils.get(await ctx.channel.webhooks(), name="Emotes")
         if not webhook:
             webhook = await ctx.channel.create_webhook(name="Emotes", reason="Automatically created webhook for bot.")
-        arg = self.searchPattern.split(arg)
+        arg = self.splitEmote.split(arg)
         for i in range(len(arg)):
             if arg[i] and arg[i][0] == ':' and arg[i][-1] == ':':
                 emote = discord.utils.get(self.bot.emojis, name=arg[i][1:-1])
@@ -146,7 +146,7 @@ class Misc(commands.Cog, name="Misc"):
         return "\n".join(final_text)
 
     def get_emote(self, emote: str):
-        if self.matchPattern.match(emote):
+        if self.matchEmote.match(emote):
             if emote.startswith(":"):
                 result = discord.utils.get(self.bot.emojis, name=emote[1:-1])
                 if result:

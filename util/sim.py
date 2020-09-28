@@ -129,4 +129,5 @@ async def main():
         print(e)
     await session.close()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

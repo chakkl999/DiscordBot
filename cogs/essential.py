@@ -24,8 +24,7 @@ class Essential(commands.Cog, name="Essential"):
     async def mainMenu(self, ctx):
         prefix = await ctx.bot.get_prefix(ctx.message)
         prefix = prefix[2]
-        embed = discord.Embed(title="Help", description=f"Prefix = {prefix}\nUsage: {prefix}command. \nReact with :zero: to get back to this menu.\nReact with :wastebasket: to delete this message.",
-                              color=discord.colour.Color.blue())
+        embed = discord.Embed(title="Help", description=f"Prefix = {prefix}\nUsage: {prefix}command. \nReact with :zero: to get back to this menu.\nReact with :wastebasket: to delete this message.", color=discord.colour.Color.blue())
         embed.set_author(name="A cute loli",
                          icon_url='https://pbs.twimg.com/profile_images/772635480244441088/r_ANUUZ0_400x400.jpg')
         index = 1
@@ -166,13 +165,14 @@ class Essential(commands.Cog, name="Essential"):
     @commands.command(name="getprefix", description="Onii-chan can get the current prefix.", usage="get_prefix")
     async def get_prefix(self, ctx):
         """Get the current prefix of the server"""
-        prefix = ctx.prefix
+        prefix = await ctx.bot.get_prefix(ctx.message)
+        prefix = prefix[2]
         await ctx.send(f"Current prefix for {ctx.guild.name} is `{prefix}`.")
 
     @commands.command(name="invite", description="Onii-chan can invite me to their server.", usage="invite")
     async def invite_link(self, ctx):
         """Get the invite link to the bot."""
-        await ctx.send("https://discord.com/api/oauth2/authorize?client_id=591468206581874691&permissions=1946549329&scope=bot")
+        await ctx.send(self.config.invite_link)
 
     async def check_command(self, command):
         for cog in self.cogs:

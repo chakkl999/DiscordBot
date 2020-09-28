@@ -66,7 +66,7 @@ session = loop.run_until_complete(getSession())
 
 bot = CustomBot(config, session, command_prefix=get_prefix, description="Just a cute loli.")
 bot.remove_command('help')
-bot.owner_id = int(config.ownerid)
+bot.owner_id = int(config.owner_id)
 
 @bot.event
 async def on_ready():
@@ -132,6 +132,17 @@ async def reload_all(ctx):
     for cogs, error in fail.items():
         embed.add_field(name=cogs, value=error, inline=False)
     await ctx.send(embed=embed)
+
+@bot.command(name="reload_config", description="Reload config.")
+@commands.is_owner()
+async def reload_config(ctx):
+    bot.config.read()
+    for file in pathlib.Path("cogs").glob("*.py"):
+        try:
+            bot.reload_extension(f"cogs.{file.name[:-3]}")
+        except Exception as e:
+            pass
+    await ctx.send("Config has been reloaded.")
 
 @bot.command(name="exit", description="Exit the bot")
 @commands.is_owner()

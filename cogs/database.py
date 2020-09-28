@@ -34,7 +34,7 @@ class db(commands.Cog, name="Database", command_attrs = dict(hidden=True)):
         currentIndex = 0
         emotes = ["◀", "▶"]
         pages = f"Page {currentIndex+1}/{len(paginator.pages)}"
-        message = await ctx.send(f"{paginator.pages}\n{pages}")
+        message = await ctx.send(f"{paginator.pages[0]}\n{pages}")
         for i in range(len(emotes)):
             await message.add_reaction(emotes[i])
         while True:
