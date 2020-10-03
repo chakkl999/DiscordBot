@@ -86,7 +86,6 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
                 reaction, user = await self.bot.wait_for('reaction_add', timeout=self.config.generic_timeout, check=check)
                 await message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
-                await message.clear_reactions()
                 break
             else:
                 index = emotes.index(str(reaction))
@@ -95,6 +94,7 @@ class Development(commands.Cog, name="Development", command_attrs = dict(hidden=
                 elif index == 1:
                     currentIndex = (currentIndex+1) % len(pages)
                 await message.edit(content=f"```py\n{pages[currentIndex]}```")
+        await message.clear_reactions()
 
     @commands.command(name="test")
     @commands.max_concurrency(number=1, per=commands.BucketType.guild, wait=False)
