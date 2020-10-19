@@ -7,24 +7,23 @@ class Game(commands.Cog, name="Game"):
     """Under construction."""
     def __init__(self, bot):
         self.bot = bot
-        self.emotes = ["🇭", "🇩" ,"🇸"]
+        self.emotes = ["🇭", "🇩", "🇸"]
         self.task = {}
         self.config = bot.getConfig()
 
-    @commands.command(name="blackjack", description="Onii-chan, want to play a game of blackjack with me?", usage="blackjack")
+    @commands.group(name="blackjack", description="Onii-chan, want to play a game of blackjack with me?", usage="blackjack", invoke_without_command=True)
     async def blackjack(self, ctx):
         """A game of blackjack.
         When the game starts, users have 15 seconds to react to the message to join the game.
         During the game, each player have 10 seconds to decide on their action (hit, double down, stand).
         """
-        await self._call_helper(ctx, self._blackjackhelper, "Blackjack game is cancalled.")
+        if ctx.invoked_subcommand is None:
+            await self._call_helper(ctx, self._blackjackhelper, "Blackjack game is cancalled.", "blackjack")
 
-    @commands.command(name="cancel")
+    @blackjack.command(name="cancel")
     @commands.is_owner()
-    async def cancel(self, ctx):
-        if self.task.get(ctx.guild.id, None) is not None:
-            self.task[ctx.guild.id].cancel()
-        self.task[ctx.guild.id] = None
+    async def blackjack_cancel(self, ctx):
+        await self._cancel_helper(ctx.guild.id, "blackjack")
 
     async def _blackjackhelper(self, ctx):
         msg = await ctx.send("```React to this message to join the game of blackjack.```")
@@ -166,14 +165,14 @@ class Game(commands.Cog, name="Game"):
 
     def _isOver(self, users):
         for v in users.values():
-            if v.stand == False:
+            if v.stand is False:
                 return False
         return True
 
     def _getNextTurn(self, users, turn):
         while True:
             turn = (turn + 1) % len(users)
-            if users[list(users)[turn]].stand == False:
+            if users[list(users)[turn]].stand is False:
                 return turn
 
     def _win(self, users, dealer):
@@ -184,19 +183,24 @@ class Game(commands.Cog, name="Game"):
                 winner.append(user)
         return winner
 
-    async def _call_helper(self, ctx, coro, cancel_message):
-        if self.task.get(ctx.guild.id, None) is None:
-            self.task[ctx.guild.id] = asyncio.create_task(coro(ctx))
+    async def _call_helper(self, ctx, coro, cancel_message, whichGame):
+        if self.task.get((ctx.guild.id, whichGame), None) is None:
+            self.task[(ctx.guild.id, whichGame)] = asyncio.create_task(coro(ctx))
         else:
             raise commands.MaxConcurrencyReached(1, commands.BucketType.guild)
         try:
-            await self.task[ctx.guild.id]
+            await self.task[(ctx.guild.id, whichGame)]
         except asyncio.CancelledError:
             await ctx.send(cancel_message)
-        except:
+        except Exception:
             # In case some other errors pop up
             pass
-        self.task[ctx.guild.id] = None
+        self.task[(ctx.guild.id, whichGame)] = None
+
+    async def _cancel_helper(self, server_id, whichGame):
+        if self.task.get((server_id, whichGame), None) is not None:
+            self.task[(server_id, whichGame)].cancel()
+        self.task[(server_id, whichGame)] = None
 
 def setup(bot):
     bot.add_cog(Game(bot))

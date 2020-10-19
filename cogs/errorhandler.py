@@ -16,6 +16,7 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        print(error)
         await self.errors.get(error.__class__, self.unknown)(ctx, error)
         """
         if isinstance(error, discord.ext.commands.NotOwner):
