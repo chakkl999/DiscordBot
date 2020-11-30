@@ -59,7 +59,7 @@ class Essential(commands.Cog, name="Essential"):
                 else:
                     await ctx.send("I'm not sure there's a category with that name, onii-chan.")
                 return
-            msg = await ctx.send(embed=self.mainMenu(ctx))
+            msg = await ctx.send(embed=await self.mainMenu(ctx))
             for i in range(len(self.cogs) + 1):
                 await msg.add_reaction(self.emotes[i])
             await msg.add_reaction(self.emotes[len(self.emotes)-1])
@@ -77,7 +77,7 @@ class Essential(commands.Cog, name="Essential"):
                 else:
                     index = self.emotes.index(str(reaction))
                     if index <= 0:
-                        await msg.edit(embed=self.mainMenu(ctx))
+                        await msg.edit(embed=await self.mainMenu(ctx))
                     elif index == len(self.emotes) - 1:
                         await msg.clear_reactions()
                         await msg.delete()
