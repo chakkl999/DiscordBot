@@ -7,6 +7,8 @@ class Config:
         self.token = None
         self.prefix = None
         self.invite_link = None
+        self.youtubeToken = None
+        self.youtubeMaxResult = 0
         self.owner_id = None
         self.errorserver = None
         self.errorchannel = None
@@ -26,6 +28,8 @@ class Config:
             self.token = self.config["Login"]["Token"]
             self.prefix = self.config["DEFAULT"]["Prefix"]
             self.invite_link = self.config["DEFAULT"]["Invite"]
+            self.youtubeToken = self.config["Search"]["Youtube"]
+            self.youtubeMaxResult = self.config["Search"].getint("YoutubeMaxResult")
             self.owner_id = self.config["ErrorHandler"].getint("OwnerID")
             self.errorserver = self.config["ErrorHandler"].getint("ServerID")
             self.errorchannel = self.config["ErrorHandler"].getint("ChannelID")

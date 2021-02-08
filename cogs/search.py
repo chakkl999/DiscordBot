@@ -15,11 +15,13 @@ class Search(commands.Cog, name="Search"):
         self.baseURL = "https://www.youtube.com/watch?v="
 
     @commands.command(name="yt", description="I can search whatever onii-chan wants on youtube. Onii-chan, don't search for any lewd things, ok?（＞д＜）", usage="yt [things to search]")
+    @commands.max_concurrency(number=1, per=commands.BucketType.guild)
     async def yt(self, ctx, *, arg):
         # Credit to https://github.com/joetats/youtube_search for the parsing of the html
         """Searches things on youtube. It'll return the first page of videos and channels(apparently). Limit to 10 videos/channel. I might include an optional limit later but idk."""
         await ctx.send("Searching for ***" + arg + "***.......")
         vids = []
+        """
         async with self.session.get(url="https://www.youtube.com/results?search_query=" + arg) as r:
             data = await r.text()
         startIndex = (data.index('window["ytInitialData"]') + len('window["ytInitialData"]') + 3)
@@ -30,6 +32,13 @@ class Search(commands.Cog, name="Search"):
                 id = vid.get("videoRenderer", {}).get("videoId", None)
                 if id:
                     vids.append(id)
+        """
+        async with self.session.get(url=f"https://www.googleapis.com/youtube/v3/search?part={'id'}&q={arg}&key={self.config.youtubeToken}&maxResults={self.config.youtubeMaxResult}") as r:
+            data = json.loads(await r.text())
+        for item in data["items"]:
+            if item["id"]["kind"] == "youtube#video":
+                vids.append(item["id"]["videoId"])
+
         if not vids:
             await ctx.send("Sorry onii-chan, I can't find any video.（>﹏<）")
             return

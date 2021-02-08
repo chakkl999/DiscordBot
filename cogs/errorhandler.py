@@ -16,7 +16,6 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        print(error)
         await self.errors.get(error.__class__, self.unknown)(ctx, error)
         """
         if isinstance(error, discord.ext.commands.NotOwner):
@@ -69,7 +68,8 @@ class ErrorHandler(commands.Cog, name="Errorhandler", command_attrs=dict(hidden=
         await ctx.send(str(error))
 
     async def commandMaxConcurrency(self, ctx, error):
-        await ctx.send("Sorry onii-chan, this command is currently being used. (⌯˃̶᷄ ﹏ ˂̶᷄⌯)ﾟ")
+        await ctx.send(f"Sorry onii-chan. (⌯˃̶᷄ ﹏ ˂̶᷄⌯)ﾟ {error}")
+        # await ctx.send("Sorry onii-chan, this command is currently being used. (⌯˃̶᷄ ﹏ ˂̶᷄⌯)ﾟ")
 
     async def ignore(self, ctx, error):
         pass

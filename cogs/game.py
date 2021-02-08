@@ -4,7 +4,7 @@ import asyncio
 import random
 
 class Game(commands.Cog, name="Game"):
-    """Under construction."""
+    """Commands related to games."""
     def __init__(self, bot):
         self.bot = bot
         self.emotes = ["🇭", "🇩", "🇸"]
@@ -20,7 +20,7 @@ class Game(commands.Cog, name="Game"):
         if ctx.invoked_subcommand is None:
             await self._call_helper(ctx, self._blackjackhelper, "Blackjack game is cancalled.", "blackjack")
 
-    @blackjack.command(name="cancel")
+    @blackjack.command(name="cancel", hidden=True)
     @commands.is_owner()
     async def blackjack_cancel(self, ctx):
         await self._cancel_helper(ctx.guild.id, "blackjack")
